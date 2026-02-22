@@ -60,6 +60,10 @@ body {
   display: flex;
   align-items: center;
 }
+
+.sort-select {
+  min-width: 140px;
+}
 .search-input {
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(201,169,110,0.3);
@@ -841,6 +845,7 @@ body {
   .logo { font-size: 1.1rem; }
   .search-input { width: 150px; }
   .search-input:focus { width: 180px; }
+  .sort-select { min-width: 120px; }
   .filter-bar { padding: 8px 16px; }
   .main { padding: 16px; }
   .product-grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 12px; }
@@ -864,6 +869,13 @@ body {
         <input type="text" class="search-input" id="searchInput" placeholder="搜尋產品…">
         <span class="search-icon">🔍</span>
       </div>
+      <select class="filter-select sort-select" id="sortSelect" aria-label="排序">
+        <option value="default">預設（不排序）</option>
+        <option value="priceAsc">價格：低到高</option>
+        <option value="priceDesc">價格：高到低</option>
+        <option value="pvAsc">PV：低到高</option>
+        <option value="pvDesc">PV：高到低</option>
+      </select>
       <button class="cart-btn" onclick="toggleCart()">
         🛒 購物車
         <span class="cart-count" id="cartCount">0</span>
@@ -1248,8 +1260,43 @@ function initFilters() {
   cs.addEventListener('change', () => { updateCategoryOptions(); applyFilters(); updateNotice(); });
   document.getElementById('categorySelect').addEventListener('change', applyFilters);
   document.getElementById('searchInput').addEventListener('input', applyFilters);
+  document.getElementById('sortSelect').addEventListener('change', applyFilters);
 
   updateCategoryOptions();
+}
+
+function parseSortableNumber(value) {
+  if (value === null || value === undefined) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  const normalized = raw.replace(/,/g, '').replace(/[^\d.-]/g, '');
+  if (!normalized) return null;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function sortProducts(products, sortKey) {
+  if (sortKey === 'default') return;
+
+  const sortConfig = {
+    priceAsc: { field: '台幣價格', dir: 1 },
+    priceDesc: { field: '台幣價格', dir: -1 },
+    pvAsc: { field: 'PV', dir: 1 },
+    pvDesc: { field: 'PV', dir: -1 }
+  };
+
+  const config = sortConfig[sortKey];
+  if (!config) return;
+
+  products.sort((a, b) => {
+    const aVal = parseSortableNumber(a[config.field]);
+    const bVal = parseSortableNumber(b[config.field]);
+
+    if (aVal === null && bVal === null) return 0;
+    if (aVal === null) return 1;
+    if (bVal === null) return -1;
+    return (aVal - bVal) * config.dir;
+  });
 }
 
 function updateCategoryOptions() {
@@ -1274,6 +1321,7 @@ function applyFilters() {
   const country = document.getElementById('countrySelect').value;
   const category = document.getElementById('categorySelect').value;
   const search = document.getElementById('searchInput').value.trim().toLowerCase();
+  const sort = document.getElementById('sortSelect').value;
 
   filteredProducts = allProducts.filter(p => {
     if (country && p['國家'] !== country) return false;
@@ -1281,6 +1329,8 @@ function applyFilters() {
     if (search && !p['產品名稱'].toLowerCase().includes(search)) return false;
     return true;
   });
+
+  sortProducts(filteredProducts, sort);
 
   renderProducts();
   document.getElementById('resultCount').textContent = `共 ${filteredProducts.length} 項`;
