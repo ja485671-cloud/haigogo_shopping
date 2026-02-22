@@ -60,10 +60,6 @@ body {
   display: flex;
   align-items: center;
 }
-
-.sort-select {
-  min-width: 140px;
-}
 .search-input {
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(201,169,110,0.3);
@@ -188,6 +184,32 @@ body {
   max-width: 1400px;
   margin: 0 auto;
   padding: 28px 28px;
+}
+
+.product-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.product-toolbar-label {
+  font-size: 0.85rem;
+  color: #6e5a37;
+  font-weight: 600;
+}
+
+.sort-select {
+  min-width: 220px;
+  background-color: #fff;
+  color: var(--ink);
+  border: 1px solid rgba(160,120,64,0.35);
+}
+
+.sort-select option {
+  background: #fff;
+  color: var(--ink);
 }
 
 /* ===== LOADING ===== */
@@ -845,7 +867,14 @@ body {
   .logo { font-size: 1.1rem; }
   .search-input { width: 150px; }
   .search-input:focus { width: 180px; }
-  .sort-select { min-width: 120px; }
+  .product-toolbar {
+    justify-content: stretch;
+    align-items: stretch;
+    flex-direction: column;
+    margin-bottom: 12px;
+    gap: 6px;
+  }
+  .sort-select { min-width: 0; width: 100%; }
   .filter-bar { padding: 8px 16px; }
   .main { padding: 16px; }
   .product-grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 12px; }
@@ -869,13 +898,6 @@ body {
         <input type="text" class="search-input" id="searchInput" placeholder="搜尋產品…">
         <span class="search-icon">🔍</span>
       </div>
-      <select class="filter-select sort-select" id="sortSelect" aria-label="排序">
-        <option value="default">預設（不排序）</option>
-        <option value="priceAsc">價格：低到高</option>
-        <option value="priceDesc">價格：高到低</option>
-        <option value="pvAsc">PV：低到高</option>
-        <option value="pvDesc">PV：高到低</option>
-      </select>
       <button class="cart-btn" onclick="toggleCart()">
         🛒 購物車
         <span class="cart-count" id="cartCount">0</span>
@@ -903,6 +925,16 @@ body {
 
 <!-- MAIN -->
 <main class="main">
+  <div class="product-toolbar">
+    <label class="product-toolbar-label" for="sortSelect">排序</label>
+    <select class="filter-select sort-select" id="sortSelect" aria-label="排序">
+      <option value="default">預設（不排序）</option>
+      <option value="priceAsc">價格：低到高</option>
+      <option value="priceDesc">價格：高到低</option>
+      <option value="pvAsc">PV：低到高</option>
+      <option value="pvDesc">PV：高到低</option>
+    </select>
+  </div>
   <div class="loading" id="loading">
     <div class="spinner"></div>
     <div class="loading-text">載入產品資料中…</div>
