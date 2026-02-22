@@ -1,0 +1,1661 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>歡樂全球購 </title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #c9a96e;
+  --gold-light: #e8d5b0;
+  --gold-dark: #a07840;
+  --ink: #1a1208;
+  --paper: #faf8f3;
+  --paper-dark: #f0ece0;
+  --red: #c0392b;
+  --green: #27ae60;
+  --shadow: 0 4px 24px rgba(26,18,8,0.10);
+  --shadow-lg: 0 8px 40px rgba(26,18,8,0.16);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Noto Sans TC', sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* ===== HEADER ===== */
+.site-header {
+  background: var(--ink);
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+}
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  border-bottom: 1px solid rgba(201,169,110,0.2);
+}
+.logo {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+}
+.logo span { color: #fff; font-weight: 400; font-size: 0.9rem; display: block; letter-spacing: 0.12em; margin-top: 1px; }
+
+.header-actions { display: flex; align-items: center; gap: 16px; }
+
+.search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.search-input {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(201,169,110,0.3);
+  border-radius: 24px;
+  padding: 8px 40px 8px 16px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-family: 'Noto Sans TC', sans-serif;
+  width: 220px;
+  outline: none;
+  transition: all 0.2s;
+}
+.search-input::placeholder { color: rgba(255,255,255,0.35); }
+.search-input:focus { background: rgba(255,255,255,0.12); border-color: var(--gold); width: 260px; }
+.search-icon {
+  position: absolute;
+  right: 12px;
+  color: rgba(201,169,110,0.7);
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+.cart-btn {
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  border-radius: 24px;
+  padding: 8px 18px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.cart-btn:hover { background: var(--gold-light); }
+.cart-count {
+  background: var(--red);
+  color: #fff;
+  border-radius: 50%;
+  width: 20px; height: 20px;
+  font-size: 0.7rem;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+}
+
+/* ===== FILTER BAR ===== */
+.filter-bar {
+  background: #222010;
+  padding: 10px 28px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  overflow-x: auto;
+}
+.filter-label { color: rgba(201,169,110,0.6); font-size: 0.75rem; white-space: nowrap; }
+
+.filter-select {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(201,169,110,0.25);
+  border-radius: 20px;
+  padding: 6px 14px;
+  color: #fff;
+  font-size: 0.82rem;
+  font-family: 'Noto Sans TC', sans-serif;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23c9a96e'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+.filter-select:focus { border-color: var(--gold); }
+.filter-select option { background: #1a1208; color: #fff; }
+
+.filter-tag {
+  background: rgba(201,169,110,0.15);
+  border: 1px solid rgba(201,169,110,0.3);
+  border-radius: 20px;
+  padding: 5px 14px;
+  color: var(--gold-light);
+  font-size: 0.78rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.filter-tag:hover, .filter-tag.active {
+  background: var(--gold);
+  color: var(--ink);
+  border-color: var(--gold);
+}
+
+.result-count {
+  margin-left: auto;
+  color: rgba(255,255,255,0.4);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+/* ===== MIN ORDER NOTICE ===== */
+.notice-bar {
+  background: linear-gradient(90deg, #2a1f00, #1a1208);
+  border-bottom: 1px solid rgba(201,169,110,0.15);
+  padding: 8px 28px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+}
+.notice-bar.show { display: flex; }
+.notice-icon { color: var(--gold); font-size: 1rem; }
+.notice-text { color: var(--gold-light); font-size: 0.82rem; }
+
+/* ===== MAIN LAYOUT ===== */
+.main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 28px 28px;
+}
+
+/* ===== LOADING ===== */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  gap: 16px;
+}
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid var(--gold-light);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { color: var(--gold-dark); font-size: 0.9rem; }
+
+/* ===== PRODUCT GRID ===== */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 18px;
+}
+
+.product-card {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(201,169,110,0.1);
+}
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.product-img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  background: var(--paper-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  position: relative;
+}
+.product-img img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.product-img-placeholder {
+  width: 100%;
+  aspect-ratio: 1;
+  background: linear-gradient(135deg, var(--paper-dark) 0%, #e8e0cc 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: var(--gold);
+}
+
+.product-badge {
+  position: absolute;
+  top: 8px; left: 8px;
+  background: var(--red);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.03em;
+}
+.product-badge.type-special { background: var(--gold-dark); }
+.product-badge.type-discount { background: #2980b9; }
+
+.product-info {
+  padding: 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.product-name {
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.product-note {
+  font-size: 0.7rem;
+  color: var(--red);
+  line-height: 1.3;
+}
+.product-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: auto;
+}
+.product-price {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gold-dark);
+  font-family: 'Noto Serif TC', serif;
+}
+.product-pv {
+  font-size: 0.72rem;
+  color: #888;
+}
+
+.add-btn {
+  margin: 0 12px 12px;
+  background: var(--ink);
+  color: var(--gold);
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 0.8rem;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  letter-spacing: 0.05em;
+}
+.add-btn:hover { background: var(--gold); color: var(--ink); }
+
+/* ===== PRODUCT DETAIL MODAL ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,18,8,0.75);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(3px);
+}
+.modal-overlay.show { display: flex; }
+
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  max-width: 560px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+  animation: modalIn 0.25s ease;
+}
+@keyframes modalIn { from { opacity:0; transform: scale(0.95) translateY(16px); } to { opacity:1; transform: none; } }
+
+.modal-img {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: var(--paper-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  color: var(--gold);
+  border-radius: 16px 16px 0 0;
+  overflow: hidden;
+}
+.modal-img img { width: 100%; height: 100%; object-fit: cover; }
+
+.modal-body { padding: 24px; }
+.modal-country-type { display: flex; gap: 8px; margin-bottom: 10px; }
+.modal-tag {
+  font-size: 0.72rem;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+.modal-tag.country { background: var(--ink); color: var(--gold); }
+.modal-tag.type { background: var(--paper-dark); color: var(--gold-dark); }
+
+.modal-name {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+.modal-id { font-size: 0.75rem; color: #aaa; margin-bottom: 12px; }
+.modal-note {
+  background: #fff5f5;
+  border-left: 3px solid var(--red);
+  padding: 8px 12px;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.8rem;
+  color: var(--red);
+  margin-bottom: 14px;
+}
+.modal-desc {
+  font-size: 0.85rem;
+  line-height: 1.8;
+  color: #555;
+  margin-bottom: 16px;
+}
+.modal-price-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--paper-dark);
+  border-bottom: 1px solid var(--paper-dark);
+  margin-bottom: 20px;
+}
+.modal-price { font-size: 1.6rem; font-weight: 700; color: var(--gold-dark); font-family: 'Noto Serif TC', serif; }
+.modal-pv { font-size: 0.85rem; color: #888; }
+
+.qty-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.qty-label { font-size: 0.85rem; color: #555; }
+.qty-ctrl { display: flex; align-items: center; gap: 0; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+.qty-btn {
+  background: var(--paper-dark);
+  border: none;
+  width: 36px; height: 36px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: var(--ink);
+  transition: background 0.15s;
+}
+.qty-btn:hover { background: var(--gold-light); }
+.qty-num {
+  width: 44px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  outline: none;
+  font-family: 'Noto Sans TC', sans-serif;
+}
+
+.modal-add-btn {
+  width: 100%;
+  background: var(--ink);
+  color: var(--gold);
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: 'Noto Sans TC', sans-serif;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: background 0.2s;
+}
+.modal-add-btn:hover { background: var(--gold); color: var(--ink); }
+.modal-close {
+  position: absolute;
+  top: 16px; right: 16px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 32px; height: 32px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s;
+}
+.modal-close:hover { background: rgba(0,0,0,0.8); }
+.modal-wrap { position: relative; }
+
+/* ===== CART PANEL ===== */
+.cart-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,18,8,0.6);
+  z-index: 300;
+  backdrop-filter: blur(2px);
+}
+.cart-overlay.show { display: block; }
+
+.cart-panel {
+  position: fixed;
+  top: 0; right: -500px;
+  width: 480px;
+  max-width: 100vw;
+  height: 100vh;
+  background: #fff;
+  z-index: 301;
+  box-shadow: -8px 0 40px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  transition: right 0.3s cubic-bezier(0.4,0,0.2,1);
+  overflow: hidden;
+}
+.cart-panel.open { right: 0; }
+
+.cart-header {
+  background: var(--ink);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.cart-title { font-family: 'Noto Serif TC', serif; font-size: 1.1rem; font-weight: 700; color: var(--gold); }
+.cart-close {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.6);
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+}
+.cart-close:hover { color: #fff; }
+
+.cart-country-badge {
+  background: linear-gradient(90deg, #2a1f00, #1a1208);
+  padding: 10px 24px;
+  font-size: 0.82rem;
+  color: var(--gold-light);
+  border-bottom: 1px solid rgba(201,169,110,0.15);
+  display: none;
+}
+.cart-country-badge.show { display: block; }
+
+.cart-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cart-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+  color: #bbb;
+}
+.cart-empty-icon { font-size: 3rem; }
+.cart-empty-text { font-size: 0.9rem; }
+
+.cart-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--paper);
+  border-radius: 10px;
+  border: 1px solid var(--paper-dark);
+}
+.cart-item-img {
+  width: 52px; height: 52px;
+  border-radius: 8px;
+  background: var(--paper-dark);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.cart-item-img img { width: 100%; height: 100%; object-fit: cover; }
+.cart-item-info { flex: 1; min-width: 0; }
+.cart-item-name { font-size: 0.8rem; font-weight: 500; line-height: 1.3; margin-bottom: 3px; }
+.cart-item-price { font-size: 0.8rem; color: var(--gold-dark); font-weight: 700; }
+.cart-item-qty { display: flex; align-items: center; gap: 4px; }
+.cart-item-qty-btn {
+  background: var(--paper-dark);
+  border: none;
+  width: 26px; height: 26px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.cart-item-qty-btn:hover { background: var(--gold-light); }
+.cart-item-qty-num { width: 28px; text-align: center; font-size: 0.85rem; font-weight: 700; }
+.cart-item-remove {
+  background: none; border: none;
+  color: #ccc; font-size: 1rem; cursor: pointer;
+  padding: 4px; transition: color 0.15s;
+}
+.cart-item-remove:hover { color: var(--red); }
+
+.cart-footer {
+  background: var(--paper);
+  border-top: 1px solid var(--paper-dark);
+  padding: 16px 24px;
+}
+.cart-summary { margin-bottom: 14px; }
+.cart-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 0.85rem;
+  color: #666;
+}
+.cart-summary-row.total {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink);
+  padding-top: 8px;
+  border-top: 1px solid #ddd;
+  margin-top: 4px;
+}
+.cart-summary-row.total .val { color: var(--gold-dark); font-size: 1.2rem; font-family: 'Noto Serif TC', serif; }
+
+.cart-min-warning {
+  background: #fff5f5;
+  border: 1px solid #ffcccc;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  color: var(--red);
+  margin-bottom: 12px;
+  display: none;
+}
+.cart-min-warning.show { display: block; }
+
+.checkout-btn {
+  width: 100%;
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: 'Noto Sans TC', sans-serif;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: background 0.2s;
+}
+.checkout-btn:hover { background: var(--gold-dark); color: #fff; }
+.clear-cart-btn {
+  width: 100%;
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 0.82rem;
+  color: #888;
+  cursor: pointer;
+  font-family: 'Noto Sans TC', sans-serif;
+  margin-top: 8px;
+  transition: all 0.2s;
+}
+.clear-cart-btn:hover { border-color: var(--red); color: var(--red); }
+
+/* ===== CHECKOUT FORM MODAL ===== */
+.checkout-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,18,8,0.8);
+  z-index: 400;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+.checkout-overlay.show { display: flex; }
+
+.checkout-modal {
+  background: #fff;
+  border-radius: 16px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  animation: modalIn 0.25s ease;
+}
+.checkout-header {
+  background: var(--ink);
+  padding: 20px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 16px 16px 0 0;
+}
+.checkout-title { font-family: 'Noto Serif TC', serif; font-size: 1.1rem; color: var(--gold); font-weight: 700; }
+.checkout-close {
+  background: none; border: none; color: rgba(255,255,255,0.6); font-size: 1.3rem; cursor: pointer;
+}
+.checkout-close:hover { color: #fff; }
+
+.checkout-body { padding: 24px 28px; }
+.form-section { margin-bottom: 22px; }
+.form-section-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--gold-dark);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--paper-dark);
+}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-row.single { grid-template-columns: 1fr; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-label { font-size: 0.78rem; color: #666; font-weight: 500; }
+.form-input, .form-select {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 0.88rem;
+  font-family: 'Noto Sans TC', sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+  color: var(--ink);
+  background: #fff;
+}
+.form-input:focus, .form-select:focus { border-color: var(--gold); }
+.form-input::placeholder { color: #bbb; }
+
+.order-preview {
+  background: var(--paper);
+  border-radius: 10px;
+  padding: 16px;
+  font-size: 0.82rem;
+  line-height: 1.8;
+  color: #555;
+  white-space: pre-wrap;
+  font-family: 'Noto Sans TC', sans-serif;
+  border: 1px solid var(--paper-dark);
+  margin-bottom: 16px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.generate-btn {
+  width: 100%;
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  border-radius: 10px;
+  padding: 13px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: 'Noto Sans TC', sans-serif;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: background 0.2s;
+  margin-bottom: 10px;
+}
+.generate-btn:hover { background: var(--gold-dark); color: #fff; }
+
+.copy-btn {
+  width: 100%;
+  background: var(--ink);
+  color: var(--gold);
+  border: none;
+  border-radius: 10px;
+  padding: 13px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: 'Noto Sans TC', sans-serif;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: background 0.2s;
+  display: none;
+}
+.copy-btn.show { display: block; }
+.copy-btn:hover { background: var(--gold); color: var(--ink); }
+.copy-btn.copied { background: var(--green); color: #fff; }
+
+/* ===== CONFLICT WARNING MODAL ===== */
+.conflict-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,18,8,0.75);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.conflict-overlay.show { display: flex; }
+.conflict-modal {
+  background: #fff;
+  border-radius: 14px;
+  max-width: 400px;
+  width: 100%;
+  padding: 28px;
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+  animation: modalIn 0.2s ease;
+}
+.conflict-icon { font-size: 2.5rem; margin-bottom: 12px; }
+.conflict-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; color: var(--ink); }
+.conflict-msg { font-size: 0.85rem; color: #666; line-height: 1.6; margin-bottom: 20px; }
+.conflict-btns { display: flex; gap: 10px; }
+.conflict-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Noto Sans TC', sans-serif;
+  transition: all 0.2s;
+}
+.conflict-btn.cancel { background: var(--paper); border: 1px solid #ddd; color: #666; }
+.conflict-btn.cancel:hover { border-color: #bbb; }
+.conflict-btn.clear { background: var(--red); border: none; color: #fff; }
+.conflict-btn.clear:hover { background: #a93226; }
+
+/* ===== TOAST ===== */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--ink);
+  color: var(--gold);
+  padding: 10px 22px;
+  border-radius: 24px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  z-index: 600;
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+  grid-column: 1/-1;
+  text-align: center;
+  padding: 60px 20px;
+  color: #bbb;
+}
+.empty-state-icon { font-size: 3rem; margin-bottom: 12px; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .header-top { padding: 12px 16px; }
+  .logo { font-size: 1.1rem; }
+  .search-input { width: 150px; }
+  .search-input:focus { width: 180px; }
+  .filter-bar { padding: 8px 16px; }
+  .main { padding: 16px; }
+  .product-grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 12px; }
+  .cart-panel { width: 100vw; }
+  .form-row { grid-template-columns: 1fr; }
+  .checkout-body { padding: 20px 18px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="header-top">
+    <div class="logo">
+      歡樂全球購
+      
+    </div>
+    <div class="header-actions">
+      <div class="search-wrap">
+        <input type="text" class="search-input" id="searchInput" placeholder="搜尋產品…">
+        <span class="search-icon">🔍</span>
+      </div>
+      <button class="cart-btn" onclick="toggleCart()">
+        🛒 購物車
+        <span class="cart-count" id="cartCount">0</span>
+      </button>
+    </div>
+  </div>
+  <div class="filter-bar" id="filterBar">
+    <span class="filter-label">國家</span>
+    <select class="filter-select" id="countrySelect">
+      <option value="">全部國家</option>
+    </select>
+    <span class="filter-label">品類</span>
+    <select class="filter-select" id="categorySelect">
+      <option value="">全部品類</option>
+    </select>
+    <span class="result-count" id="resultCount"></span>
+  </div>
+</header>
+
+<!-- MIN ORDER NOTICE -->
+<div class="notice-bar" id="noticeBar">
+  <span class="notice-icon">ℹ️</span>
+  <span class="notice-text" id="noticeText"></span>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">載入產品資料中…</div>
+  </div>
+  <div class="product-grid" id="productGrid" style="display:none"></div>
+</main>
+
+<!-- PRODUCT DETAIL MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleModalOverlayClick(event)">
+  <div class="modal-wrap">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal" id="modal">
+      <div class="modal-img" id="modalImg"></div>
+      <div class="modal-body">
+        <div class="modal-country-type" id="modalTags"></div>
+        <div class="modal-name" id="modalName"></div>
+        <div class="modal-id" id="modalId"></div>
+        <div class="modal-note" id="modalNote" style="display:none"></div>
+        <div class="modal-desc" id="modalDesc"></div>
+        <div class="modal-price-row">
+          <div>
+            <div class="modal-price" id="modalPrice"></div>
+            <div class="modal-pv" id="modalPv"></div>
+          </div>
+        </div>
+        <div class="qty-row">
+          <span class="qty-label">數量</span>
+          <div class="qty-ctrl">
+            <button class="qty-btn" onclick="changeQty(-1)">−</button>
+            <input class="qty-num" id="modalQty" type="number" value="1" min="1" max="99" readonly>
+            <button class="qty-btn" onclick="changeQty(1)">＋</button>
+          </div>
+        </div>
+        <button class="modal-add-btn" id="modalAddBtn" onclick="addToCartFromModal()">加入購物車</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CART PANEL -->
+<div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+<div class="cart-panel" id="cartPanel">
+  <div class="cart-header">
+    <div class="cart-title">🛒 購物車</div>
+    <button class="cart-close" onclick="toggleCart()">✕</button>
+  </div>
+  <div class="cart-country-badge" id="cartCountryBadge"></div>
+  <div class="cart-items" id="cartItems">
+    <div class="cart-empty">
+      <div class="cart-empty-icon">🛍️</div>
+      <div class="cart-empty-text">購物車是空的</div>
+    </div>
+  </div>
+  <div class="cart-footer">
+    <div class="cart-summary" id="cartSummary"></div>
+    <div class="cart-min-warning" id="cartMinWarning"></div>
+    <button class="checkout-btn" onclick="openCheckout()">填寫訂單資料</button>
+    <button class="clear-cart-btn" onclick="clearCart()">清空購物車</button>
+  </div>
+</div>
+
+<!-- CONFLICT WARNING -->
+<div class="conflict-overlay" id="conflictOverlay">
+  <div class="conflict-modal">
+    <div class="conflict-icon">⚠️</div>
+    <div class="conflict-title">國家不符</div>
+    <div class="conflict-msg" id="conflictMsg"></div>
+    <div class="conflict-btns">
+      <button class="conflict-btn cancel" onclick="closeConflict()">保留原訂單</button>
+      <button class="conflict-btn clear" onclick="clearAndAdd()">清空並加入新產品</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div class="checkout-overlay" id="checkoutOverlay">
+  <div class="checkout-modal">
+    <div class="checkout-header">
+      <div class="checkout-title">📋 填寫訂單資料</div>
+      <button class="checkout-close" onclick="closeCheckout()">✕</button>
+    </div>
+    <div class="checkout-body">
+      <div class="form-section">
+        <div class="form-section-title">訂單標題資訊</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">客人姓名 *</label>
+            <input class="form-input" id="f_name"  oninput="updatePreview()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">訂單編號 *</label>
+            <input class="form-input" id="f_ordernum"  oninput="updatePreview()">
+          </div>
+        </div>
+        <div class="form-row single" style="margin-top:10px">
+          <div class="form-group">
+            <label class="form-label">購買國家</label>
+            <select class="form-select" id="f_country" onchange="updatePreview()">
+              <option value="韓國">韓國</option>
+              <option value="日本">日本</option>
+              <option value="馬來西亞">馬來西亞</option>
+              <option value="美國">美國</option>
+              <option value="香港">香港</option>
+              <option value="紐西蘭">紐西蘭</option>
+              <option value="澳洲">澳洲</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">會員資料</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">（1）下單會員姓名 *</label>
+            <input class="form-input" id="f_member_name" oninput="updatePreview()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">（2）下單會員編號 *</label>
+            <input class="form-input" id="f_member_id" oninput="updatePreview()">
+          </div>
+        </div>
+        <div class="form-row" style="margin-top:10px">
+          <div class="form-group">
+            <label class="form-label">（3）登入密碼 *</label>
+            <input class="form-input" id="f_password" type="password" oninput="updatePreview()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">（4）指定業績日期</label>
+            <input class="form-input" id="f_date" type="date" oninput="updatePreview()">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">7-11 收件資訊</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">收件人姓名</label>
+            <input class="form-input" id="f_recv_name" oninput="updatePreview()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">收件人電話</label>
+            <input class="form-input" id="f_recv_phone" oninput="updatePreview()">
+          </div>
+        </div>
+        <div class="form-row" style="margin-top:10px">
+          <div class="form-group">
+            <label class="form-label">店名</label>
+            <input class="form-input" id="f_store_name" oninput="updatePreview()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">店號</label>
+            <input class="form-input" id="f_store_num" oninput="updatePreview()">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">（9）備註</div>
+        <div class="form-group">
+          <textarea class="form-input" id="f_remark" rows="2"  oninput="updatePreview()" style="resize:vertical"></textarea>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">訂單預覽</div>
+        <div class="order-preview" id="orderPreview">填寫上方資料後，訂單內容將自動出現在這裡…</div>
+        <button class="generate-btn" onclick="generateOrder()">產生訂單</button>
+        <button class="copy-btn" id="copyBtn" onclick="copyOrder()">複製訂單（貼到 LINE）</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+<script src="https://www.gstatic.com/charts/loader.js"></script>
+<script>
+// ===== CONFIG =====
+const SHEET_ID = '1iu7_CAaPMRi5c0lB649jXgTAlD-vPCTM9melAaH7PIU';
+const GID = '2087310803';// 工作表1的GID
+
+const MIN_ORDERS = {
+  '韓國': 1800, '日本': 2600, '馬來西亞': 2800,
+  '美國': 6000, '香港': 2800, '紐西蘭': 0, '澳洲': 0
+};
+const MIN_SPECIAL = 3000;
+
+// ===== STATE =====
+let allProducts = [];
+let filteredProducts = [];
+let cart = [];
+let cartCountry = '';
+let currentModal = null;
+let pendingAdd = null;
+let generatedOrder = '';
+
+// ===== LOAD DATA =====
+function loadData() {
+  const loading = document.getElementById('loading');
+  const grid = document.getElementById('productGrid');
+  if (loading) loading.style.display = 'flex';
+  if (grid) grid.style.display = 'none';
+
+  // 8 秒逾時提示
+  const timer = setTimeout(() => {
+    const el = document.getElementById('loading');
+    if (el) {
+      el.style.display = 'flex';
+      el.innerHTML = `
+        <div style="color:#c0392b;text-align:center;padding:20px;line-height:1.7">
+          <div style="font-weight:700;font-size:1rem">⚠️ 載入逾時</div>
+          <div style="color:#888;font-size:0.85rem;margin-top:8px;white-space:pre-wrap">
+Google Sheet 沒有回應。請確認：
+- Sheet 已「發布到網路」
+- 使用的是正確工作表 GID
+- 不是需要登入才能看
+          </div>
+        </div>
+      `;
+    }
+  }, 8000);
+  window.__gviz_timer = timer;
+
+  // ✅ 正規載入 Google Visualization
+  google.charts.load('current', { packages: ['corechart'] });
+  google.charts.setOnLoadCallback(() => {
+    const url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(SHEET_ID)}/gviz/tq?gid=${encodeURIComponent(GID)}&tqx=out:json`;
+    console.log('[GVIZ] Query URL:', url);
+
+    const query = new google.visualization.Query(url);
+    query.send((response) => {
+      console.log('[GVIZ] response received');
+      onSheetData(response); // 直接丟回你原本的解析流程
+    });
+  });
+}
+
+window.onSheetData = function(response) {
+  try {
+    if (window.__gviz_timer) clearTimeout(window.__gviz_timer);
+
+    // ✅ QueryResponse 正確錯誤判斷
+    if (response.isError && response.isError()) {
+      const el = document.getElementById('loading');
+      if (el) {
+        el.style.display = 'flex';
+        el.innerHTML = `<div style="color:#c0392b;text-align:center;padding:20px;line-height:1.7">
+          <div style="font-weight:700;font-size:1rem">⚠️ Google Sheet 回傳錯誤</div>
+          <div style="text-align:left;white-space:pre-wrap;color:#666;font-size:12px;margin-top:10px">${response.getMessage()}</div>
+        </div>`;
+      }
+      return;
+    }
+
+    // ✅ QueryResponse 正確取表方式
+    const dataTable = response.getDataTable();
+    if (!dataTable || dataTable.getNumberOfColumns() === 0) {
+      const el = document.getElementById('loading');
+      if (el) {
+        el.style.display = 'flex';
+        el.innerHTML = `<div style="color:#c0392b;text-align:center;padding:20px;line-height:1.7">
+          <div style="font-weight:700;font-size:1rem">⚠️ 資料不存在</div>
+          <div style="color:#888;font-size:0.85rem;margin-top:8px;white-space:pre-wrap">
+請確認：
+- 你選的是有資料的工作表（GID）
+- 第一列有欄位標題
+          </div>
+        </div>`;
+      }
+      return;
+    }
+
+    // ✅ headers
+    const headers = [];
+    for (let i = 0; i < dataTable.getNumberOfColumns(); i++) {
+      headers.push((dataTable.getColumnLabel(i) || '').trim());
+    }
+
+    // ✅ rows
+    const rows = [];
+    for (let r = 0; r < dataTable.getNumberOfRows(); r++) {
+      const obj = {};
+      for (let c = 0; c < headers.length; c++) {
+        const v = dataTable.getValue(r, c);
+        obj[headers[c]] = (v === null || v === undefined) ? '' : String(v);
+      }
+      rows.push(obj);
+    }
+
+    // （可選）看抓到哪些欄位
+    console.log('[GVIZ] headers:', headers);
+    console.log('[GVIZ] rows:', rows.length);
+
+    // ✅ 欄名對齊：類型 -> 品類（避免你下拉用品類但資料叫類型）
+    rows.forEach(p => { if (!p['品類'] && p['類型']) p['品類'] = p['類型']; });
+
+    // ✅ 必要欄位檢查（品類可用類型替代）
+    const required = ['產品名稱','國家','品類','台幣價格','PV'];
+    const missing = required.filter(k => !headers.includes(k) && !(k === '品類' && headers.includes('類型')));
+    if (missing.length) {
+      const el = document.getElementById('loading');
+      if (el) {
+        el.style.display = 'flex';
+        el.innerHTML = `<div style="color:#c0392b;text-align:center;padding:20px;line-height:1.7">
+          <div style="font-weight:700;font-size:1rem">⚠️ 欄位名稱對不上</div>
+          <div style="color:#888;font-size:0.85rem;margin-top:8px;white-space:pre-wrap">
+缺少欄位：${missing.join('、')}
+
+目前抓到的欄名：
+${headers.join(' | ')}
+          </div>
+        </div>`;
+      }
+      return;
+    }
+
+    // ✅ 進入你原本的流程
+    allProducts = rows
+      .filter(p => (p['產品名稱'] || '').trim())
+      .filter(p => !('是否上架' in p) || p['是否上架'] !== '否');
+
+    initFilters();
+    applyFilters();
+    updateNotice();
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('productGrid').style.display = 'grid';
+
+  } catch (e) {
+    const el = document.getElementById('loading');
+    if (el) {
+      el.style.display = 'flex';
+      el.innerHTML = `<div style="color:#c0392b;text-align:center;padding:20px;line-height:1.7">
+        <div style="font-weight:700;font-size:1rem">⚠️ 資料解析失敗</div>
+        <div style="color:#888;font-size:0.85rem;margin-top:8px;white-space:pre-wrap">${e && e.message ? e.message : String(e)}</div>
+      </div>`;
+    }
+  }
+};
+// ===== FILTERS =====
+function initFilters() {
+  const countries = [...new Set(allProducts.map(p => p['國家']).filter(Boolean))];
+  const countryOrder = ['韓國','日本','馬來西亞','美國','香港','紐西蘭','澳洲'];
+  const sortedCountries = countryOrder.filter(c => countries.includes(c));
+
+  const cs = document.getElementById('countrySelect');
+  sortedCountries.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    cs.appendChild(o);
+  });
+
+  cs.addEventListener('change', () => { updateCategoryOptions(); applyFilters(); updateNotice(); });
+  document.getElementById('categorySelect').addEventListener('change', applyFilters);
+  document.getElementById('searchInput').addEventListener('input', applyFilters);
+
+  updateCategoryOptions();
+}
+
+function updateCategoryOptions() {
+  const country = document.getElementById('countrySelect').value;
+  const cs = document.getElementById('categorySelect');
+  const prev = cs.value;
+  cs.innerHTML = '<option value="">全部品類</option>';
+
+  let prods = country ? allProducts.filter(p => p['國家'] === country) : allProducts;
+  const cats = [...new Set(prods.map(p => p['品類']).filter(c => c))];
+  const catOrder = ['特惠組','超級特惠單瓶價','保健食品系列','護膚系列','美妝防曬系列','美妝眼部系列','美妝臉部系列','美妝唇部系列','美容配件系列','頭髮系列','身體系列','口腔系列','清潔用品系列','廚房用品系列','香氛系列','家居系列','飲品系列','食品系列','調味料系列','內衣褲系列','其他'];
+  const sorted = catOrder.filter(c => cats.includes(c));
+  sorted.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    if (c === prev) o.selected = true;
+    cs.appendChild(o);
+  });
+}
+
+function applyFilters() {
+  const country = document.getElementById('countrySelect').value;
+  const category = document.getElementById('categorySelect').value;
+  const search = document.getElementById('searchInput').value.trim().toLowerCase();
+
+  filteredProducts = allProducts.filter(p => {
+    if (country && p['國家'] !== country) return false;
+    if (category && p['品類'] !== category) return false;
+    if (search && !p['產品名稱'].toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  renderProducts();
+  document.getElementById('resultCount').textContent = `共 ${filteredProducts.length} 項`;
+}
+
+function updateNotice() {
+  const country = document.getElementById('countrySelect').value;
+  const bar = document.getElementById('noticeBar');
+  const txt = document.getElementById('noticeText');
+  if (country && MIN_ORDERS[country] > 0) {
+    txt.textContent = `【${country}】最低訂單金額：NT$${MIN_ORDERS[country].toLocaleString()}`;
+    bar.classList.add('show');
+  } else {
+    bar.classList.remove('show');
+  }
+}
+
+// ===== RENDER PRODUCTS =====
+function getCategoryEmoji(cat) {
+  const map = {
+    '保健食品系列':'💊','護膚系列':'✨','美妝防曬系列':'🌞','美妝眼部系列':'👁️',
+    '美妝臉部系列':'💄','美妝唇部系列':'💋','美容配件系列':'🪞','頭髮系列':'💆',
+    '身體系列':'🧴','口腔系列':'🦷','清潔用品系列':'🧼','廚房用品系列':'🍳',
+    '香氛系列':'🌸','家居系列':'🏠','飲品系列':'🥤','食品系列':'🍽️',
+    '調味料系列':'🧂','內衣褲系列':'👗','特惠組':'🎁','超級特惠單瓶價':'⭐','其他':'📦'
+  };
+  return map[cat] || '📦';
+}
+
+function getBadge(type) {
+  if (type === '特惠組') return '<div class="product-badge type-special">特惠組</div>';
+  if (type === '超級特惠單瓶價') return '<div class="product-badge type-discount">單瓶特惠</div>';
+  return '';
+}
+
+function renderProducts() {
+  const grid = document.getElementById('productGrid');
+  if (filteredProducts.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔍</div><div>找不到符合的產品</div></div>';
+    return;
+  }
+  grid.innerHTML = filteredProducts.map((p, i) => {
+    const emoji = getCategoryEmoji(p['品類']);
+    const imgHtml = p['圖片網址']
+      ? `<img src="${p['圖片網址']}" alt="${p['產品名稱']}" loading="lazy" onerror="this.parentElement.innerHTML='${emoji}'">`
+      : emoji;
+    const price = parseInt(p['台幣價格']) || 0;
+    const pv = parseInt(p['PV']) || 0;
+    return `
+    <div class="product-card" onclick="openModal(${i})">
+      <div class="product-img-placeholder" style="position:relative">
+        ${p['圖片網址'] ? `<img src="${p['圖片網址']}" alt="${p['產品名稱']}" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px 12px 0 0" onerror="this.outerHTML='<span style=font-size:2.5rem>${emoji}</span>'">` : `<span style="font-size:2.5rem">${emoji}</span>`}
+        ${getBadge(p['類型'])}
+      </div>
+      <div class="product-info">
+        <div class="product-name">${p['產品名稱']}</div>
+        ${p['備註'] ? `<div class="product-note">⚠️ ${p['備註'].split('；')[0]}</div>` : ''}
+        <div class="product-price-row">
+          <div class="product-price">NT$${price.toLocaleString()}</div>
+          ${pv > 0 ? `<div class="product-pv">PV ${pv.toLocaleString()}</div>` : ''}
+        </div>
+      </div>
+      <button class="add-btn" onclick="event.stopPropagation(); quickAdd(${i})">＋ 加入購物車</button>
+    </div>`;
+  }).join('');
+}
+
+// ===== MODAL =====
+function openModal(idx) {
+  const p = filteredProducts[idx];
+  currentModal = p;
+  document.getElementById('modalQty').value = 1;
+
+  const emoji = getCategoryEmoji(p['品類']);
+  const imgEl = document.getElementById('modalImg');
+  if (p['圖片網址']) {
+    imgEl.innerHTML = `<img src="${p['圖片網址']}" alt="${p['產品名稱']}" onerror="this.outerHTML='<span style=font-size:4rem>${emoji}</span>'">`;
+  } else {
+    imgEl.innerHTML = `<span style="font-size:4rem">${emoji}</span>`;
+  }
+
+  document.getElementById('modalTags').innerHTML = `
+    <span class="modal-tag country">${p['國家']}</span>
+    <span class="modal-tag type">${p['類型']} · ${p['品類']}</span>
+  `;
+  document.getElementById('modalName').textContent = p['產品名稱'];
+  document.getElementById('modalId').textContent = p['官網編號'] ? `官網編號：${p['官網編號']}` : '';
+
+  const noteEl = document.getElementById('modalNote');
+  if (p['備註']) {
+    noteEl.textContent = '⚠️ ' + p['備註'];
+    noteEl.style.display = 'block';
+  } else {
+    noteEl.style.display = 'none';
+  }
+
+  document.getElementById('modalDesc').textContent = p['產品介紹'] || '（詳細介紹待補充）';
+  document.getElementById('modalPrice').textContent = `NT$${parseInt(p['台幣價格']).toLocaleString()}`;
+  const pv = parseInt(p['PV']) || 0;
+  document.getElementById('modalPv').textContent = pv > 0 ? `PV ${pv.toLocaleString()}` : '';
+
+  document.getElementById('modalOverlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+  document.body.style.overflow = '';
+  currentModal = null;
+}
+
+function handleModalOverlayClick(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function changeQty(delta) {
+  const input = document.getElementById('modalQty');
+  const v = Math.max(1, Math.min(99, parseInt(input.value) + delta));
+  input.value = v;
+}
+
+function addToCartFromModal() {
+  if (!currentModal) return;
+  const qty = parseInt(document.getElementById('modalQty').value) || 1;
+  tryAddToCart(currentModal, qty);
+  closeModal();
+}
+
+function quickAdd(idx) {
+  tryAddToCart(filteredProducts[idx], 1);
+}
+
+// ===== CART LOGIC =====
+function tryAddToCart(product, qty) {
+  const country = product['國家'];
+  if (cartCountry && cartCountry !== country) {
+    pendingAdd = { product, qty };
+    document.getElementById('conflictMsg').textContent =
+      `您的購物車目前為【${cartCountry}】訂單，無法加入【${country}】產品。請選擇保留原訂單，或清空後加入新產品。`;
+    document.getElementById('conflictOverlay').classList.add('show');
+    return;
+  }
+  addToCart(product, qty);
+}
+
+function addToCart(product, qty) {
+  cartCountry = product['國家'];
+  const existing = cart.find(i => i.id === product['流水號']);
+  if (existing) {
+    existing.qty += qty;
+  } else {
+    cart.push({ id: product['流水號'], product, qty });
+  }
+  updateCartUI();
+  showToast(`✓ 已加入購物車：${product['產品名稱'].substring(0,15)}…`);
+}
+
+function closeConflict() {
+  pendingAdd = null;
+  document.getElementById('conflictOverlay').classList.remove('show');
+}
+
+function clearAndAdd() {
+  cart = [];
+  cartCountry = '';
+  document.getElementById('conflictOverlay').classList.remove('show');
+  if (pendingAdd) {
+    addToCart(pendingAdd.product, pendingAdd.qty);
+    pendingAdd = null;
+  }
+}
+
+function clearCart() {
+  if (cart.length === 0) return;
+  cart = [];
+  cartCountry = '';
+  updateCartUI();
+  showToast('購物車已清空');
+}
+
+function updateCartQty(id, delta) {
+  const item = cart.find(i => i.id === id);
+  if (!item) return;
+  item.qty = Math.max(1, item.qty + delta);
+  updateCartUI();
+}
+
+function removeFromCart(id) {
+  cart = cart.filter(i => i.id !== id);
+  if (cart.length === 0) cartCountry = '';
+  updateCartUI();
+}
+
+function updateCartUI() {
+  const total = cart.reduce((s, i) => s + parseInt(i.product['台幣價格']) * i.qty, 0);
+  const totalPv = cart.reduce((s, i) => s + (parseInt(i.product['PV']) || 0) * i.qty, 0);
+  const count = cart.reduce((s, i) => s + i.qty, 0);
+
+  document.getElementById('cartCount').textContent = count;
+
+  const badge = document.getElementById('cartCountryBadge');
+  if (cartCountry) {
+    badge.textContent = `目前訂單國家：【${cartCountry}】`;
+    badge.classList.add('show');
+  } else {
+    badge.classList.remove('show');
+  }
+
+  const itemsEl = document.getElementById('cartItems');
+  if (cart.length === 0) {
+    itemsEl.innerHTML = '<div class="cart-empty"><div class="cart-empty-icon">🛍️</div><div class="cart-empty-text">購物車是空的</div></div>';
+  } else {
+    itemsEl.innerHTML = cart.map(item => {
+      const p = item.product;
+      const emoji = getCategoryEmoji(p['品類']);
+      const subtotal = parseInt(p['台幣價格']) * item.qty;
+      return `
+      <div class="cart-item">
+        <div class="cart-item-img">
+          ${p['圖片網址'] ? `<img src="${p['圖片網址']}" alt="" onerror="this.outerHTML='${emoji}'">` : emoji}
+        </div>
+        <div class="cart-item-info">
+          <div class="cart-item-name">${p['產品名稱']}</div>
+          <div class="cart-item-price">NT$${subtotal.toLocaleString()}</div>
+        </div>
+        <div class="cart-item-qty">
+          <button class="cart-item-qty-btn" onclick="updateCartQty('${item.id}',-1)">−</button>
+          <span class="cart-item-qty-num">${item.qty}</span>
+          <button class="cart-item-qty-btn" onclick="updateCartQty('${item.id}',1)">＋</button>
+        </div>
+        <button class="cart-item-remove" onclick="removeFromCart('${item.id}')">✕</button>
+      </div>`;
+    }).join('');
+  }
+
+  const summaryEl = document.getElementById('cartSummary');
+  summaryEl.innerHTML = `
+    <div class="cart-summary-row"><span>小計（${count} 件）</span><span>NT$${total.toLocaleString()}</span></div>
+    <div class="cart-summary-row"><span>總 PV</span><span>${totalPv.toLocaleString()}</span></div>
+    <div class="cart-summary-row total"><span>總金額</span><span class="val">NT$${total.toLocaleString()}</span></div>
+  `;
+
+  const minOrder = cartCountry ? (MIN_ORDERS[cartCountry] || 0) : 0;
+  const warning = document.getElementById('cartMinWarning');
+  if (minOrder > 0 && total < minOrder && cart.length > 0) {
+    warning.textContent = `⚠️ 【${cartCountry}】最低訂單金額 NT$${minOrder.toLocaleString()}，目前差 NT$${(minOrder - total).toLocaleString()}`;
+    warning.classList.add('show');
+  } else {
+    warning.classList.remove('show');
+  }
+}
+
+function toggleCart() {
+  const panel = document.getElementById('cartPanel');
+  const overlay = document.getElementById('cartOverlay');
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open', !isOpen);
+  overlay.classList.toggle('show', !isOpen);
+  document.body.style.overflow = isOpen ? '' : 'hidden';
+}
+
+// ===== CHECKOUT =====
+function openCheckout() {
+  if (cart.length === 0) { showToast('請先加入產品'); return; }
+  // 預設國家
+  const sel = document.getElementById('f_country');
+  if (cartCountry) sel.value = cartCountry;
+  toggleCart();
+  document.getElementById('checkoutOverlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  updatePreview();
+}
+
+function closeCheckout() {
+  document.getElementById('checkoutOverlay').classList.remove('show');
+  document.body.style.overflow = '';
+  document.getElementById('copyBtn').classList.remove('show');
+  generatedOrder = '';
+}
+
+function getTodayStr() {
+  const d = new Date();
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+function updatePreview() {
+  // 即時更新標題預覽
+  const name = document.getElementById('f_name').value || '（姓名）';
+  const num = document.getElementById('f_ordernum').value || '（編號）';
+  const country = document.getElementById('f_country').value || '（國家）';
+  const today = getTodayStr();
+  const previewTitle = `景儀團隊-${name}${today}訂單${num}${country}購`;
+
+  const preview = document.getElementById('orderPreview');
+  preview.textContent = previewTitle + '\n\n（點下方「產生訂單」按鈕產生完整訂單）';
+}
+
+function generateOrder() {
+  const name = document.getElementById('f_name').value;
+  const num = document.getElementById('f_ordernum').value;
+  const country = document.getElementById('f_country').value;
+  const memberName = document.getElementById('f_member_name').value;
+  const memberId = document.getElementById('f_member_id').value;
+  const password = document.getElementById('f_password').value;
+  const date = document.getElementById('f_date').value;
+  const recvName = document.getElementById('f_recv_name').value;
+  const recvPhone = document.getElementById('f_recv_phone').value;
+  const storeName = document.getElementById('f_store_name').value;
+  const storeNum = document.getElementById('f_store_num').value;
+  const remark = document.getElementById('f_remark').value;
+
+  if (!name || !num) { showToast('請填寫姓名和訂單編號'); return; }
+
+  const today = getTodayStr();
+  const total = cart.reduce((s, i) => s + parseInt(i.product['台幣價格']) * i.qty, 0);
+  const totalPv = cart.reduce((s, i) => s + (parseInt(i.product['PV']) || 0) * i.qty, 0);
+
+  const productLines = cart.map(item =>
+    `        ${item.product['產品名稱']} x${item.qty}  NT$${(parseInt(item.product['台幣價格']) * item.qty).toLocaleString()}`
+  ).join('\n');
+
+  generatedOrder = `景儀團隊-${name}${today}訂單${num}${country}購
+
+（1）下單會員姓名：${memberName}
+（2）下單會員編號：${memberId}
+（3）登入密碼：${password}
+（4）指定業績日期：${date || ''}
+（5）訂購產品項目及數量：
+${productLines}
+
+（6）總PV：${totalPv.toLocaleString()}
+（7）總金額：NT$${total.toLocaleString()}
+（8）7-11收件資訊：
+          收件人姓名：${recvName}
+          收件人電話：${recvPhone}
+          店名：${storeName}
+          店號：${storeNum}
+（9）備註：${remark}`;
+
+  document.getElementById('orderPreview').textContent = generatedOrder;
+  document.getElementById('copyBtn').classList.add('show');
+}
+
+function copyOrder() {
+  if (!generatedOrder) return;
+  navigator.clipboard.writeText(generatedOrder).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ 已複製！貼到 LINE 發送';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '複製訂單（貼到 LINE）';
+      btn.classList.remove('copied');
+    }, 2500);
+  }).catch(() => {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = generatedOrder;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('已複製！');
+  });
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ===== INIT =====
+loadData();
+</script>
+</body>
+</html>
