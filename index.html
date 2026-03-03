@@ -960,7 +960,42 @@ body {
             <div class="modal-pv" id="modalPv"></div>
           </div>
         </div>
-        <div class="qty-row">
+
+        <!-- 特惠組購買方式選擇 -->
+        <div id="bundleBlock" style="display:none; border:1px solid #e0d0a0; border-radius:10px; overflow:hidden; margin-bottom:14px;">
+          <div style="background:#f9f3e0; padding:8px 14px; font-size:0.8rem; color:#7a6000; font-weight:600;">🎁 特惠組購買方式</div>
+          <div style="padding:12px 14px;">
+            <label id="buyBundleLabel" style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px;border-radius:8px;margin-bottom:6px;border:2px solid #b8860b;background:#fffdf0;" onclick="selectBuyMode('bundle')">
+              <input type="radio" name="buyMode" value="bundle" checked style="accent-color:#b8860b;width:16px;height:16px;">
+              <div style="flex:1;">
+                <div style="font-size:0.9rem;font-weight:600;color:#333;" id="bundleOptionLabel"></div>
+                <div style="font-size:0.78rem;color:#888;">購買整組</div>
+              </div>
+              <div style="font-size:1rem;font-weight:700;color:#b8860b;" id="bundlePriceLabel"></div>
+            </label>
+            <label id="buyUnitLabel" style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;" onclick="selectBuyMode('unit')">
+              <input type="radio" name="buyMode" value="unit" style="accent-color:#b8860b;width:16px;height:16px;">
+              <div style="flex:1;">
+                <div style="font-size:0.9rem;font-weight:600;color:#333;">散瓶購買</div>
+                <div style="font-size:0.78rem;color:#888;">單瓶換算價 <span id="unitPriceLabel" style="color:#b8860b;font-weight:700;"></span></div>
+              </div>
+            </label>
+            <div id="unitQtyArea" style="display:none;margin-top:10px;padding:10px;background:#fafafa;border-radius:8px;">
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <span style="font-size:0.85rem;color:#555;">購買數量（瓶）</span>
+                <div class="qty-ctrl">
+                  <button class="qty-btn" onclick="changeQty(-1)">−</button>
+                  <input class="qty-num" id="modalQty" type="number" value="1" min="1" max="99" readonly>
+                  <button class="qty-btn" onclick="changeQty(1)">＋</button>
+                </div>
+                <span id="qtyTotalDisplay" style="font-size:0.95rem;color:#b8860b;font-weight:700;"></span>
+              </div>
+              <div id="unitQtyHint" style="margin-top:6px;font-size:0.78rem;color:#e67e22;"></div>
+            </div>
+          </div>
+        </div>
+        <!-- 一般產品數量 -->
+        <div class="qty-row" id="normalQtyRow">
           <span class="qty-label">數量</span>
           <div class="qty-ctrl">
             <button class="qty-btn" onclick="changeQty(-1)">−</button>
@@ -1132,6 +1167,10 @@ let cartCountry = '';
 let currentModal = null;
 let pendingAdd = null;
 let generatedOrder = '';
+let currentModalUnitPrice = null;
+let currentModalBundleQty = null;
+let currentModalBundlePrice = null;
+let currentBuyMode = "bundle";
 
 // ===== LOAD DATA =====
 function loadData() {
@@ -1392,9 +1431,9 @@ function getCategoryEmoji(cat) {
   return map[cat] || '📦';
 }
 
-function getBadge(type) {
-  if (type === '特惠組') return '<div class="product-badge type-special">特惠組</div>';
-  if (type === '超級特惠單瓶價') return '<div class="product-badge type-discount">單瓶特惠</div>';
+function getBadge(p) {
+  if (p['品類'] === '特惠組') return '<div class="product-badge type-special">特惠組</div>';
+  if (p['品類'] === '超級特惠單瓶價') return '<div class="product-badge type-discount">單瓶特惠</div>';
   return '';
 }
 
@@ -1415,7 +1454,7 @@ function renderProducts() {
     <div class="product-card" onclick="openModal(${i})">
       <div class="product-img-placeholder" style="position:relative">
         ${p['圖片網址'] ? `<img src="${p['圖片網址']}" alt="${p['產品名稱']}" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px 12px 0 0" onerror="this.outerHTML='<span style=font-size:2.5rem>${emoji}</span>'">` : `<span style="font-size:2.5rem">${emoji}</span>`}
-        ${getBadge(p['類型'])}
+        ${getBadge(p)}
       </div>
       <div class="product-info">
         <div class="product-name">${p['產品名稱']}</div>
@@ -1431,6 +1470,42 @@ function renderProducts() {
 }
 
 // ===== MODAL =====
+// ===== 解析特惠組瓶/盒數 =====
+// 支援：4瓶組、三盒組、6瓶組、2入、三入、3入組、兩盒組 等
+function parseBundleQty(name) {
+  if (!name) return 1;
+  // 先試阿拉伯數字
+  const arabicMatch = name.match(/([0-9]+)\s*(瓶|盒|入|件|包|杯|條|組)/);
+  if (arabicMatch) return parseInt(arabicMatch[1]);
+  // 再試中文數字
+  const chineseMap = {'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'兩':2};
+  const chineseMatch = name.match(/([一二三四五六七八九十兩])\s*(瓶|盒|入|件|包|杯|條)/);
+  if (chineseMatch) return chineseMap[chineseMatch[1]] || 1;
+  return 1;
+}
+
+function selectBuyMode(mode) {
+  currentBuyMode = mode;
+  const unitArea = document.getElementById("unitQtyArea");
+  const bundleLabel = document.getElementById("buyBundleLabel");
+  const unitLabel = document.getElementById("buyUnitLabel");
+  if (mode === "unit") {
+    unitArea.style.display = "block";
+    bundleLabel.style.border = "2px solid transparent";
+    bundleLabel.style.background = "";
+    unitLabel.style.border = "2px solid #b8860b";
+    unitLabel.style.background = "#fffdf0";
+    document.getElementById("modalQty").value = 1;
+    updateQtyTotalDisplay();
+  } else {
+    unitArea.style.display = "none";
+    bundleLabel.style.border = "2px solid #b8860b";
+    bundleLabel.style.background = "#fffdf0";
+    unitLabel.style.border = "2px solid transparent";
+    unitLabel.style.background = "";
+  }
+}
+
 function openModal(idx) {
   const p = filteredProducts[idx];
   currentModal = p;
@@ -1446,7 +1521,7 @@ function openModal(idx) {
 
   document.getElementById('modalTags').innerHTML = `
     <span class="modal-tag country">${p['國家']}</span>
-    <span class="modal-tag type">${p['類型']} · ${p['品類']}</span>
+    <span class="modal-tag type">${p['品類']}</span>
   `;
   document.getElementById('modalName').textContent = p['產品名稱'];
   document.getElementById('modalId').textContent = p['官網編號'] ? `官網編號：${p['官網編號']}` : '';
@@ -1463,6 +1538,37 @@ function openModal(idx) {
   document.getElementById('modalPrice').textContent = `NT$${parseInt(p['台幣價格']).toLocaleString()}`;
   const pv = parseInt(p['PV']) || 0;
   document.getElementById('modalPv').textContent = pv > 0 ? `PV ${pv.toLocaleString()}` : '';
+
+  // ===== 特惠組購買方式 =====
+  const singleRef = (p['單瓶對應流水號'] || '').trim();
+  const bundleBlock = document.getElementById('bundleBlock');
+  const normalQtyRow = document.getElementById('normalQtyRow');
+  currentBuyMode = 'bundle';
+  currentModalUnitPrice = null;
+  currentModalBundleQty = null;
+  currentModalBundlePrice = null;
+
+  if (singleRef) {
+    const singleProduct = allProducts.find(x => x['流水號'] === singleRef);
+    const bundleQty = parseBundleQty(p['產品名稱']);
+    const bundlePrice = parseInt(p['台幣價格']) || 0;
+    const singlePrice = singleProduct ? (parseInt(singleProduct['台幣價格']) || 0) : Math.round(bundlePrice / bundleQty);
+    currentModalUnitPrice = singlePrice;
+    currentModalBundleQty = bundleQty;
+    currentModalBundlePrice = bundlePrice;
+    document.getElementById('bundleOptionLabel').textContent = '買整組（' + bundleQty + '瓶/盒）';
+    document.getElementById('bundlePriceLabel').textContent = 'NT$' + bundlePrice.toLocaleString();
+    document.getElementById('unitPriceLabel').textContent = 'NT$' + singlePrice.toLocaleString() + ' / 瓶';
+    selectBuyMode('bundle');
+    document.getElementById('qtyTotalDisplay').textContent = '';
+    document.getElementById('unitQtyHint').textContent = '';
+    bundleBlock.style.display = 'block';
+    normalQtyRow.style.display = 'none';
+  } else {
+    bundleBlock.style.display = 'none';
+    normalQtyRow.style.display = 'flex';
+    document.getElementById('modalQty').value = 1;
+  }
 
   document.getElementById('modalOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
@@ -1482,18 +1588,65 @@ function changeQty(delta) {
   const input = document.getElementById('modalQty');
   const v = Math.max(1, Math.min(99, parseInt(input.value) + delta));
   input.value = v;
+  updateQtyTotalDisplay();
+}
+
+function updateQtyTotalDisplay() {
+  if (currentBuyMode !== 'unit' || !currentModalUnitPrice || !currentModalBundleQty) {
+    document.getElementById('qtyTotalDisplay').textContent = '';
+    const h = document.getElementById('unitQtyHint');
+    if (h) h.textContent = '';
+    return;
+  }
+  const qty = parseInt(document.getElementById('modalQty').value) || 1;
+  const bundleQty = currentModalBundleQty;
+  const singlePrice = currentModalUnitPrice;
+  const bundlePrice = currentModalBundlePrice;
+  let price, hint;
+  if (qty < bundleQty) {
+    price = singlePrice * qty;
+    hint = '⚠️ 未達' + bundleQty + '瓶，以單瓶定價 NT$' + singlePrice.toLocaleString() + ' 計算';
+  } else if (qty === bundleQty) {
+    price = bundlePrice;
+    hint = '✅ 剛好一整組，與買整組同價';
+  } else {
+    const unitFromBundle = Math.round(bundlePrice / bundleQty);
+    price = unitFromBundle * qty;
+    hint = '🎉 超過' + bundleQty + '瓶，以特惠換算 NT$' + unitFromBundle.toLocaleString() + ' / 瓶計算';
+  }
+  document.getElementById('qtyTotalDisplay').textContent = '= NT$' + price.toLocaleString();
+  document.getElementById('unitQtyHint').textContent = hint;
 }
 
 function addToCartFromModal() {
   if (!currentModal) return;
-  const qty = parseInt(document.getElementById('modalQty').value) || 1;
-  tryAddToCart(currentModal, qty);
+  if (currentBuyMode === 'bundle' || !currentModalUnitPrice) {
+    tryAddToCart(currentModal, 1);
+  } else {
+    const qty = parseInt(document.getElementById('modalQty').value) || 1;
+    const bundleQty = currentModalBundleQty;
+    const singlePrice = currentModalUnitPrice;
+    const bundlePrice = currentModalBundlePrice;
+    const unitPrice = qty < bundleQty ? singlePrice : Math.round(bundlePrice / bundleQty);
+    const pvPerUnit = Math.round((parseInt(currentModal['PV']) || 0) / bundleQty);
+    const virtualProduct = Object.assign({}, currentModal, {
+      '_isUnitCalc': true,
+      '_origName': currentModal['產品名稱'],
+      '_unitPrice': unitPrice,
+      '_bundleQty': bundleQty,
+      '台幣價格': String(unitPrice),
+      'PV': String(pvPerUnit),
+      '流水號': currentModal['流水號'] + '_unit'
+    });
+    tryAddToCart(virtualProduct, qty);
+  }
   closeModal();
 }
 
 function quickAdd(idx) {
   tryAddToCart(filteredProducts[idx], 1);
 }
+
 
 // ===== CART LOGIC =====
 function tryAddToCart(product, qty) {
@@ -1585,7 +1738,7 @@ function updateCartUI() {
           ${p['圖片網址'] ? `<img src="${p['圖片網址']}" alt="" onerror="this.outerHTML='${emoji}'">` : emoji}
         </div>
         <div class="cart-item-info">
-          <div class="cart-item-name">${p['產品名稱']}</div>
+          <div class="cart-item-name">${p['_isUnitCalc'] ? p['_origName'] + '（散瓶 x' + item.qty + '，每瓶 NT$' + parseInt(p['台幣價格']).toLocaleString() + '）' : p['產品名稱']}</div>
           <div class="cart-item-price">NT$${subtotal.toLocaleString()}</div>
         </div>
         <div class="cart-item-qty">
@@ -1681,7 +1834,7 @@ function generateOrder() {
   const totalPv = cart.reduce((s, i) => s + (parseInt(i.product['PV']) || 0) * i.qty, 0);
 
   const productLines = cart.map(item =>
-    `        ${item.product['產品名稱']} x${item.qty}  NT$${(parseInt(item.product['台幣價格']) * item.qty).toLocaleString()}`
+    (() => { const p = item.product; const name = p['_isUnitCalc'] ? `${p['_origName']}（散瓶，每瓶NT$${parseInt(p['台幣價格']).toLocaleString()}，共${item.qty}瓶）` : p['產品名稱']; const subtotal = parseInt(p['台幣價格']) * item.qty; return `        ${name} x${item.qty}  NT$${subtotal.toLocaleString()}`; })()
   ).join('\n');
 
   generatedOrder = `景儀團隊-${name}${today}訂單${num}${country}購
