@@ -1894,12 +1894,7 @@ ${productLines}
 （6）總PV：${totalPv.toLocaleString()}
 （7）總金額：NT$${total.toLocaleString()}
 （8）收件資訊（${shipType === '711' ? '7-11' : shipType === 'family' ? '全家' : '郵寄'}）：
-${shipType === 'mail' ? '          收件人姓名：' + mailName + '
-          收件人電話：' + mailPhone + '
-          收件地址：' + mailAddr : '          收件人姓名：' + recvName + '
-          收件人電話：' + recvPhone + '
-          店名：' + storeName + '
-          店號：' + storeNum}
+${shipType === 'mail' ? '          收件人姓名：' + mailName + '\n          收件人電話：' + mailPhone + '\n          收件地址：' + mailAddr : '          收件人姓名：' + recvName + '\n          收件人電話：' + recvPhone + '\n          店名：' + storeName + '\n          店號：' + storeNum}
 （9）備註：${remark}`;
 
   document.getElementById('orderPreview').textContent = generatedOrder;
