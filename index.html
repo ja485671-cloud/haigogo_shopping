@@ -1105,25 +1105,52 @@ body {
       </div>
 
       <div class="form-section">
-        <div class="form-section-title">7-11 收件資訊</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">收件人姓名</label>
-            <input class="form-input" id="f_recv_name" oninput="updatePreview()">
+        <div class="form-section-title">（8）收件方式</div>
+        <div class="form-group" style="margin-bottom:14px">
+          <select class="form-input" id="f_ship_type" onchange="updateShipFields(); updatePreview()" style="font-size:0.95rem; cursor:pointer;">
+            <option value="711">7-11 超商取貨</option>
+            <option value="family">全家 超商取貨</option>
+            <option value="mail">郵寄</option>
+          </select>
+        </div>
+        <!-- 超商欄位 -->
+        <div id="ship_cvs_fields">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">收件人姓名</label>
+              <input class="form-input" id="f_recv_name" oninput="updatePreview()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">收件人電話</label>
+              <input class="form-input" id="f_recv_phone" oninput="updatePreview()">
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">收件人電話</label>
-            <input class="form-input" id="f_recv_phone" oninput="updatePreview()">
+          <div class="form-row" style="margin-top:10px">
+            <div class="form-group">
+              <label class="form-label">店名</label>
+              <input class="form-input" id="f_store_name" oninput="updatePreview()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">店號</label>
+              <input class="form-input" id="f_store_num" oninput="updatePreview()">
+            </div>
           </div>
         </div>
-        <div class="form-row" style="margin-top:10px">
-          <div class="form-group">
-            <label class="form-label">店名</label>
-            <input class="form-input" id="f_store_name" oninput="updatePreview()">
+        <!-- 郵寄欄位 -->
+        <div id="ship_mail_fields" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">收件人姓名</label>
+              <input class="form-input" id="f_mail_name" oninput="updatePreview()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">收件人電話</label>
+              <input class="form-input" id="f_mail_phone" oninput="updatePreview()">
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">店號</label>
-            <input class="form-input" id="f_store_num" oninput="updatePreview()">
+          <div class="form-group" style="margin-top:10px">
+            <label class="form-label">收件地址</label>
+            <input class="form-input" id="f_mail_addr" oninput="updatePreview()">
           </div>
         </div>
       </div>
@@ -1809,6 +1836,12 @@ function getTodayStr() {
   return `${d.getMonth()+1}/${d.getDate()}`;
 }
 
+function updateShipFields() {
+  const t = document.getElementById('f_ship_type').value;
+  document.getElementById('ship_cvs_fields').style.display = t === 'mail' ? 'none' : 'block';
+  document.getElementById('ship_mail_fields').style.display = t === 'mail' ? 'block' : 'none';
+}
+
 function updatePreview() {
   // 即時更新標題預覽
   const name = document.getElementById('f_name').value || '（姓名）';
@@ -1833,6 +1866,10 @@ function generateOrder() {
   const recvPhone = document.getElementById('f_recv_phone').value;
   const storeName = document.getElementById('f_store_name').value;
   const storeNum = document.getElementById('f_store_num').value;
+  const shipType = document.getElementById('f_ship_type').value;
+  const mailName = document.getElementById('f_mail_name').value;
+  const mailPhone = document.getElementById('f_mail_phone').value;
+  const mailAddr = document.getElementById('f_mail_addr').value;
   const remark = document.getElementById('f_remark').value;
 
   if (!name || !num) { showToast('請填寫姓名和訂單編號'); return; }
@@ -1856,11 +1893,13 @@ ${productLines}
 
 （6）總PV：${totalPv.toLocaleString()}
 （7）總金額：NT$${total.toLocaleString()}
-（8）7-11收件資訊：
-          收件人姓名：${recvName}
-          收件人電話：${recvPhone}
-          店名：${storeName}
-          店號：${storeNum}
+（8）收件資訊（${shipType === '711' ? '7-11' : shipType === 'family' ? '全家' : '郵寄'}）：
+${shipType === 'mail' ? '          收件人姓名：' + mailName + '
+          收件人電話：' + mailPhone + '
+          收件地址：' + mailAddr : '          收件人姓名：' + recvName + '
+          收件人電話：' + recvPhone + '
+          店名：' + storeName + '
+          店號：' + storeNum}
 （9）備註：${remark}`;
 
   document.getElementById('orderPreview').textContent = generatedOrder;
