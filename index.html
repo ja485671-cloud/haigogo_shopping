@@ -1060,7 +1060,7 @@ body {
         <div class="form-row" style="margin-top:10px">
           <div class="form-group">
             <label class="form-label">（3）登入密碼 *</label>
-            <input class="form-input" id="f_password" type="password" oninput="updatePreview()">
+            <input class="form-input" id="f_password" type="password" oninput="updatePreview()" placeholder="留空使用預設密碼">
           </div>
           <div class="form-group">
             <label class="form-label">（4）指定業績日期</label>
@@ -1697,7 +1697,8 @@ function generateOrder() {
   const country = document.getElementById('f_country').value;
   const memberName = document.getElementById('f_member_name').value;
   const memberId = document.getElementById('f_member_id').value;
-  const password = document.getElementById('f_password').value;
+  const passwordRaw2 = document.getElementById('f_password').value;
+  const password = passwordRaw2 || '本團密碼';
   const date = document.getElementById('f_date').value;
   const shipType = document.getElementById('f_ship_type').value;
   const recvName = document.getElementById('f_recv_name').value;
@@ -1789,7 +1790,8 @@ function updateShipFields() {
 // ===== 帳號購買資格驗證 =====
 async function verifyMemberEligibility() {
   const account = document.getElementById('f_member_id').value.trim();
-  const password = document.getElementById('f_password').value.trim();
+  const passwordRaw = document.getElementById('f_password').value.trim();
+  const password = passwordRaw || 'you@9988';
   const resultEl = document.getElementById('verifyResult');
   const btn = document.getElementById('verifyBtn');
 
