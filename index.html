@@ -2370,15 +2370,18 @@ async function addressApiPost(action, payload) {
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action, ...payload })
     });
+
     return await res.json();
   }
 
   const path = action === 'get' ? '/get-addresses' : '/save-addresses';
+
   const res = await fetch(LOGIN_API_URL + path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
+
   return await res.json();
 }
 
