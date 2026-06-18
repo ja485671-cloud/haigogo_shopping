@@ -1345,24 +1345,26 @@ body {
         </div>
       </div>
 
-      <!-- 常用收件資料：像 7-11 賣貨便一樣，直接選、直接套、直接存 -->
-      <div id="savedAddrSection" class="addr-section" style="display:block;margin-bottom:16px;">
-        <div class="addr-section-title">常用收件資料</div>
-        <div class="addr-select-row">
-          <select id="addrQuickSelect" class="addr-select">
-            <option value="">尚無常用收件資料</option>
-          </select>
-          <button type="button" class="addr-action-btn" onclick="applySelectedAddress()">套入</button>
-          <button type="button" class="addr-action-btn" onclick="saveCurrentAddrFromModal()">儲存目前資料</button>
-          <button type="button" class="addr-action-btn" onclick="openAddrModal()">管理</button>
-        </div>
-        <div class="addr-save-hint" id="addrSaveHint">登入後可把收件資料儲存到 Google Sheet，下次直接套入。</div>
-      </div>
-
-<div class="form-section" id="memberVerifySection">
+      <div class="form-section" id="memberVerifySection">
         <div class="form-section-title">帳號購買資格驗證</div>
         <button type="button" id="verifyBtn" onclick="verifyMemberEligibility()" style="width:100%;padding:10px 14px;background:linear-gradient(135deg,#3a5fc0,#6a3fc0);color:#fff;border:none;border-radius:8px;font-size:0.88rem;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:0.03em;">🔍 驗證此帳號能否購買購物車商品</button>
         <div id="verifyResult" style="display:none;margin-top:12px;border-radius:10px;padding:14px 16px;font-size:0.84rem;line-height:2;border:1px solid #e0e0e0;"></div>
+      </div>
+
+      <!-- 常用收件資料：像賣貨便一樣，直接選、直接套，不再跟人類玩彈窗迷宮 -->
+      <div class="form-section" id="savedAddrSection" style="display:none;">
+        <div class="form-section-title">常用收件資料</div>
+        <div style="background:#f9f6ef;border:1px solid #e0d4b0;border-radius:10px;padding:12px;">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select class="form-input" id="addrQuickSelect" style="flex:1;cursor:pointer;">
+              <option value="">載入常用收件資料中…</option>
+            </select>
+            <button type="button" onclick="applySelectedAddress()" style="padding:9px 14px;background:#1a1208;color:#c9a96e;border:none;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">
+              套入
+            </button>
+          </div>
+          <div class="addr-save-hint" id="addrSaveHint" style="font-size:0.75rem;color:#aaa;margin-top:6px;"></div>
+        </div>
       </div>
 
       <div class="form-section">
@@ -1412,6 +1414,12 @@ body {
             <input class="form-input" id="f_mail_addr" oninput="updatePreview()">
           </div>
         </div>
+      </div>
+
+      <div class="form-section" id="saveCurrentAddrSection" style="display:none;">
+        <button type="button" onclick="saveCurrentAddrFromModal()" style="width:100%;padding:12px 14px;background:#c9a96e;color:#1a1208;border:none;border-radius:10px;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:inherit;">
+          ＋ 儲存目前填寫的收件資料
+        </button>
       </div>
 
       <div class="form-section">
@@ -2230,7 +2238,7 @@ async function verifyMemberEligibility() {
 const LOGIN_API_URL = 'https://haigogo-productlookup-792929696060.us-central1.run.app';
 // ✅ 若你要改成直接存到自己的 Google Sheet，貼上 Apps Script Web App URL
 // 沒貼的話，會沿用原本雲端 API。
-const ADDRESS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzRsLLq0eSTZVPKyNtGuHKw6J2Sl-pDib6rSDNNlqaP0XoKfi7XP4B5cfhprERHGnL3Cw/exec';
+const ADDRESS_WEB_APP_URL = '';
 const MEMBER_SHEET_GID = '1919324458';
 
 function checkAlreadyLoggedIn() {
@@ -2304,23 +2312,40 @@ let savedAddresses = [];
 let currentMemberAccount = '';
 let currentMemberName = '';
 
+function normalizeAddress(a) {
+  // 支援新版 Apps Script 欄位，也相容舊版中文欄位。畢竟資料欄位改名這種事，最像人類會做的災難。
+  const type = a.type || a.shipType || '711';
+  return {
+    id: a.id || a.ID || '',
+    type,
+    收件人: a.收件人 || a.receiverName || a.name || '',
+    電話: a.電話 || a.receiverPhone || a.phone || '',
+    店名: a.店名 || a.storeName || '',
+    店號: a.店號 || a.storeNumber || '',
+    地址: a.地址 || a.address || '',
+    名稱: a.名稱 || a.label || a.receiverName || a.收件人 || a.storeName || a.店名 || a.address || a.地址 || '未命名'
+  };
+}
+
 function renderAddrSelect() {
   const addrSection = document.getElementById('savedAddrSection');
+  const saveSection = document.getElementById('saveCurrentAddrSection');
   if (addrSection) addrSection.style.display = 'block';
+  if (saveSection) saveSection.style.display = 'block';
 
   const sel = document.getElementById('addrQuickSelect');
   if (!sel) return;
 
   if (!savedAddresses || savedAddresses.length === 0) {
-    sel.innerHTML = '<option value="">尚無常用收件資料</option>';
+    sel.innerHTML = '<option value="">尚無常用收件資料，請先填寫後儲存</option>';
     return;
   }
 
   const typeLabel = { '711': '7-11', 'family': '全家', 'mail': '郵寄' };
   sel.innerHTML = '<option value="">請選擇常用收件資料</option>' + savedAddresses.map((a, i) => {
     const label = a.type === 'mail'
-      ? `${a.名稱 || a.收件人 || '未命名'}｜${typeLabel[a.type] || ''}｜${a.地址 || ''}`
-      : `${a.名稱 || a.收件人 || '未命名'}｜${typeLabel[a.type] || ''}｜${a.店名 || ''}${a.店號 ? ' ' + a.店號 : ''}`;
+      ? `${a.收件人 || '未命名'}｜${typeLabel[a.type] || ''}｜${a.地址 || ''}`
+      : `${a.收件人 || '未命名'}｜${typeLabel[a.type] || ''}｜${a.店名 || ''}${a.店號 ? ' ' + a.店號 : ''}`;
     return `<option value="${i}">${escapeHtml(label)}</option>`;
   }).join('');
 }
@@ -2331,12 +2356,14 @@ function escapeHtml(str) {
 
 function applySelectedAddress() {
   const sel = document.getElementById('addrQuickSelect');
-  if (!sel || sel.value === '') { showAddrHint('請先選擇一筆常用收件資料', '#e67e22'); return; }
+  if (!sel || sel.value === '') {
+    showAddrHint('請先選擇一筆常用收件資料', '#e67e22');
+    return;
+  }
   applyAddrFromModal(Number(sel.value));
 }
 
 async function addressApiPost(action, payload) {
-  // 自己的 Google Sheet Web App：用 text/plain 避免瀏覽器預檢造成麻煩，因為網頁世界就是這麼可愛。
   if (ADDRESS_WEB_APP_URL) {
     const res = await fetch(ADDRESS_WEB_APP_URL, {
       method: 'POST',
@@ -2346,7 +2373,6 @@ async function addressApiPost(action, payload) {
     return await res.json();
   }
 
-  // 原本雲端 API
   const path = action === 'get' ? '/get-addresses' : '/save-addresses';
   const res = await fetch(LOGIN_API_URL + path, {
     method: 'POST',
@@ -2356,10 +2382,21 @@ async function addressApiPost(action, payload) {
   return await res.json();
 }
 
+async function addressApiGetList(account) {
+  if (ADDRESS_WEB_APP_URL) {
+    const url = ADDRESS_WEB_APP_URL + '?action=list&account=' + encodeURIComponent(account);
+    const res = await fetch(url);
+    return await res.json();
+  }
+  return await addressApiPost('get', { account });
+}
+
 function openAddrModal() {
+  // 保留舊彈窗功能，但主流程已改成下拉套入。世界少一個彈窗，功德加一點。
   const body = document.getElementById('addrModalBody');
+  if (!body) return;
   if (savedAddresses.length === 0) {
-    body.innerHTML = '<div class="addr-empty">尚無常用收件資料<br>填寫收件資料後按下方按鈕儲存</div>';
+    body.innerHTML = '<div class="addr-empty">尚無常用收件資料<br>填寫收件資料後按儲存即可新增多筆</div>';
   } else {
     const typeIcon = { '711': '🏪', 'family': '🏪', 'mail': '📮' };
     const typeLabel = { '711': '7-11', 'family': '全家', 'mail': '郵寄' };
@@ -2367,8 +2404,8 @@ function openAddrModal() {
       <div class="addr-card" onclick="applyAddrFromModal(${i})">
         <div class="addr-card-icon">${typeIcon[a.type] || '📦'}</div>
         <div class="addr-card-info">
-          <div class="addr-card-name">${a.名稱}　<span style="font-size:0.75rem;color:#aaa;font-weight:400;">${typeLabel[a.type] || ''}</span></div>
-          <div class="addr-card-detail">${a.type === 'mail' ? (a.收件人 + '　' + a.電話 + '　' + a.地址) : (a.收件人 + '　' + a.電話 + '　' + a.店名 + ' ' + a.店號)}</div>
+          <div class="addr-card-name">${escapeHtml(a.收件人 || a.名稱 || '未命名')}　<span style="font-size:0.75rem;color:#aaa;font-weight:400;">${typeLabel[a.type] || ''}</span></div>
+          <div class="addr-card-detail">${escapeHtml(a.type === 'mail' ? (a.電話 + '　' + a.地址) : (a.電話 + '　' + a.店名 + ' ' + a.店號))}</div>
         </div>
         <button class="addr-card-del" onclick="event.stopPropagation();deleteAddrFromModal(${i})" title="刪除">✕</button>
       </div>
@@ -2378,7 +2415,8 @@ function openAddrModal() {
 }
 
 function closeAddrModal() {
-  document.getElementById('addrModalOverlay').classList.remove('show');
+  const el = document.getElementById('addrModalOverlay');
+  if (el) el.classList.remove('show');
 }
 
 function applyAddrFromModal(idx) {
@@ -2399,58 +2437,117 @@ function applyAddrFromModal(idx) {
   }
   updatePreview();
   closeAddrModal();
-  showAddrHint('✅ 已套入：' + a.名稱, '#27ae60');
+  showAddrHint('✅ 已套入：' + (a.收件人 || a.名稱 || '收件資料'), '#27ae60');
 }
 
 async function deleteAddrFromModal(idx) {
-  const name = savedAddresses[idx].名稱;
-  savedAddresses.splice(idx, 1);
+  const item = savedAddresses[idx];
+  if (!item) return;
+  const name = item.收件人 || item.名稱 || '收件資料';
+
   try {
-    addressApiPost('save', { account: currentMemberAccount, addresses: savedAddresses });
-    renderAddrSelect();
-    openAddrModal(); // 重新渲染彈窗
+    if (ADDRESS_WEB_APP_URL && item.id) {
+      const data = await addressApiPost('delete', { id: item.id, account: currentMemberAccount });
+      if (!data.success) throw new Error(data.message || 'delete failed');
+    } else {
+      savedAddresses.splice(idx, 1);
+      await addressApiPost('save', { account: currentMemberAccount, addresses: savedAddresses });
+    }
+
+    await loadAddresses(currentMemberAccount);
+    openAddrModal();
     showAddrHint('🗑️ 已刪除：' + name, '#888');
   } catch(e) {
     showAddrHint('❌ 刪除失敗', '#e74c3c');
   }
 }
 
-async function saveCurrentAddrFromModal() {
-  if (!currentMemberAccount) { showAddrHint('❌ 請先登入', '#e74c3c'); return; }
+function collectCurrentAddress() {
   const shipType = document.getElementById('f_ship_type').value;
-  let newAddr = { type: shipType };
   if (shipType === 'mail') {
     const name = document.getElementById('f_mail_name').value.trim();
     const phone = document.getElementById('f_mail_phone').value.trim();
     const addr = document.getElementById('f_mail_addr').value.trim();
-    if (!name && !addr) { closeAddrModal(); showAddrHint('❌ 請先填寫收件人或地址', '#e74c3c'); return; }
-    newAddr.收件人 = name; newAddr.電話 = phone; newAddr.地址 = addr;
-    newAddr.名稱 = name || addr.substring(0, 10);
-  } else {
-    const name = document.getElementById('f_recv_name').value.trim();
-    const phone = document.getElementById('f_recv_phone').value.trim();
-    const storeName = document.getElementById('f_store_name').value.trim();
-    const storeNum = document.getElementById('f_store_num').value.trim();
-    if (!name && !storeName) { closeAddrModal(); showAddrHint('❌ 請先填寫收件人或店名', '#e74c3c'); return; }
-    newAddr.收件人 = name; newAddr.電話 = phone; newAddr.店名 = storeName; newAddr.店號 = storeNum;
-    newAddr.名稱 = name || storeName;
+    if (!name || !phone || !addr) return { error: '郵寄請填寫收件人、電話、地址' };
+    return { type: shipType, 收件人: name, 電話: phone, 地址: addr, 名稱: name };
   }
-  const existing = savedAddresses.findIndex(a => a.名稱 === newAddr.名稱 && a.type === newAddr.type);
-  if (existing >= 0) savedAddresses[existing] = newAddr;
-  else savedAddresses.push(newAddr);
+
+  const name = document.getElementById('f_recv_name').value.trim();
+  const phone = document.getElementById('f_recv_phone').value.trim();
+  const storeName = document.getElementById('f_store_name').value.trim();
+  const storeNum = document.getElementById('f_store_num').value.trim();
+  if (!name || !phone || !storeName) return { error: '超商取貨請填寫收件人、電話、店名' };
+  return { type: shipType, 收件人: name, 電話: phone, 店名: storeName, 店號: storeNum, 名稱: name };
+}
+
+async function saveCurrentAddrFromModal() {
+  if (!currentMemberAccount) {
+    showAddrHint('❌ 請先登入', '#e74c3c');
+    return;
+  }
+
+  const newAddr = collectCurrentAddress();
+  if (newAddr.error) {
+    showAddrHint('❌ ' + newAddr.error, '#e74c3c');
+    return;
+  }
+
   try {
-    const res = addressApiPost('save', { account: currentMemberAccount, addresses: savedAddresses });
-    const data = await res.json();
-    if (data.success) {
-      renderAddrSelect();
-      closeAddrModal();
-      showAddrHint('✅ 已儲存：' + newAddr.名稱, '#27ae60');
+    let data;
+    if (ADDRESS_WEB_APP_URL) {
+      data = await addressApiPost('save', {
+        account: currentMemberAccount,
+        receiverName: newAddr.收件人,
+        receiverPhone: newAddr.電話,
+        shipType: newAddr.type,
+        storeName: newAddr.店名 || '',
+        storeNumber: newAddr.店號 || '',
+        address: newAddr.地址 || ''
+      });
+    } else {
+      savedAddresses.push(newAddr); // 舊 API 備援：一次存整包陣列
+      data = await addressApiPost('save', { account: currentMemberAccount, addresses: savedAddresses });
+    }
+
+    if (data && data.success) {
+      await loadAddresses(currentMemberAccount);
+      showAddrHint('✅ 已新增一筆常用收件資料：' + newAddr.收件人, '#27ae60');
     } else {
       showAddrHint('❌ 儲存失敗', '#e74c3c');
     }
-  } catch(e) { showAddrHint('❌ 無法連線', '#e74c3c'); }
+  } catch(e) {
+    showAddrHint('❌ 無法連線到 Google Sheet', '#e74c3c');
+  }
 }
 
+async function loadAddresses(account) {
+  currentMemberAccount = account;
+  const addrSection = document.getElementById('savedAddrSection');
+  const saveSection = document.getElementById('saveCurrentAddrSection');
+  if (addrSection) addrSection.style.display = 'block';
+  if (saveSection) saveSection.style.display = 'block';
+
+  try {
+    const data = await addressApiGetList(account);
+    if (data.success) {
+      savedAddresses = (data.addresses || []).map(normalizeAddress);
+    } else {
+      savedAddresses = [];
+    }
+  } catch(e) {
+    console.log('載入收件資料失敗', e);
+    savedAddresses = [];
+  }
+  renderAddrSelect();
+}
+
+function showAddrHint(msg, color) {
+  const el = document.getElementById('addrSaveHint');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = color || '#888';
+  setTimeout(() => { el.textContent = ''; }, 3500);
+}
 
 function updateLoginStatus(account, name) {
   currentMemberAccount = account;
