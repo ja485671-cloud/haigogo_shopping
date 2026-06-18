@@ -1325,8 +1325,8 @@ body {
         <div class="form-section-title">會員資料</div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">（1）下單會員姓名</label>
-            <input class="form-input" id="f_member_name" oninput="syncCustomerName();updatePreview()">
+            <label class="form-label">（1）下單會員姓名 *</label>
+            <input class="form-input" id="f_member_name" oninput="updatePreview()">
           </div>
           <div class="form-group">
             <label class="form-label">（2）下單會員編號 *</label>
@@ -2016,17 +2016,9 @@ function getTodayStr() {
   return `${d.getMonth()+1}/${d.getDate()}`;
 }
 
-function syncCustomerName() {
-  const memberName = document.getElementById('f_member_name')?.value || '';
-  const customerName = document.getElementById('f_name');
-  if (customerName) {
-    customerName.value = memberName;
-  }
-}
-
 function updatePreview() {
   // 即時更新標題預覽
-  const name = document.getElementById('f_name').value || document.getElementById('f_member_name').value || '（姓名）';
+  const name = document.getElementById('f_name').value || '（姓名）';
   const num = document.getElementById('f_ordernum').value || '（編號）';
   const country = document.getElementById('f_country').value || '（國家）';
   const today = getTodayStr();
@@ -2037,7 +2029,7 @@ function updatePreview() {
 }
 
 function generateOrder() {
-  const name = document.getElementById('f_name').value || document.getElementById('f_member_name').value;
+  const name = document.getElementById('f_name').value;
   const num = document.getElementById('f_ordernum').value;
   const country = document.getElementById('f_country').value;
   const memberName = document.getElementById('f_member_name').value;
