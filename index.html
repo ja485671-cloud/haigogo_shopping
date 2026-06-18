@@ -1345,15 +1345,18 @@ body {
         </div>
       </div>
 
-            <!-- 常用收件資料按鈕 -->
-      <div id="savedAddrSection" style="display:none;margin-bottom:14px;">
-        <button type="button" onclick="openAddrModal()" style="width:100%;padding:9px 14px;background:#f9f6ef;border:1px solid #e0d4b0;border-radius:8px;font-size:0.85rem;font-weight:600;color:#7a6000;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:8px;">
-          📋 常用收件資料　<span style="float:right;color:#aaa;font-weight:400;">點選套入 ›</span>
-        </button>
-        <button type="button" onclick="saveCurrentAddrFromModal()" style="width:100%;padding:10px 14px;background:#c9a96e;color:#1a1208;border:none;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;">
-          ＋ 儲存目前填寫的收件資料
-        </button>
-        <div class="addr-save-hint" id="addrSaveHint" style="font-size:0.75rem;color:#aaa;margin-top:4px;"></div>
+      <!-- 常用收件資料：像 7-11 賣貨便一樣，直接選、直接套、直接存 -->
+      <div id="savedAddrSection" class="addr-section" style="display:block;margin-bottom:16px;">
+        <div class="addr-section-title">常用收件資料</div>
+        <div class="addr-select-row">
+          <select id="addrQuickSelect" class="addr-select">
+            <option value="">尚無常用收件資料</option>
+          </select>
+          <button type="button" class="addr-action-btn" onclick="applySelectedAddress()">套入</button>
+          <button type="button" class="addr-action-btn" onclick="saveCurrentAddrFromModal()">儲存目前資料</button>
+          <button type="button" class="addr-action-btn" onclick="openAddrModal()">管理</button>
+        </div>
+        <div class="addr-save-hint" id="addrSaveHint">登入後可把收件資料儲存到 Google Sheet，下次直接套入。</div>
       </div>
 
 <div class="form-section" id="memberVerifySection">
@@ -2225,6 +2228,9 @@ async function verifyMemberEligibility() {
 
 // ===== 會員登入 =====
 const LOGIN_API_URL = 'https://haigogo-productlookup-792929696060.us-central1.run.app';
+// ✅ 若你要改成直接存到自己的 Google Sheet，貼上 Apps Script Web App URL
+// 沒貼的話，會沿用原本雲端 API。
+const ADDRESS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzRsLLq0eSTZVPKyNtGuHKw6J2Sl-pDib6rSDNNlqaP0XoKfi7XP4B5cfhprERHGnL3Cw/exec';
 const MEMBER_SHEET_GID = '1919324458';
 
 function checkAlreadyLoggedIn() {
@@ -2299,10 +2305,55 @@ let currentMemberAccount = '';
 let currentMemberName = '';
 
 function renderAddrSelect() {
-  // 舊的 select 已移除，改用彈窗；訂單彈窗開啟時一律顯示常用收件資料區塊
-  const checkoutOpen = document.getElementById('checkoutOverlay')?.classList.contains('show');
   const addrSection = document.getElementById('savedAddrSection');
-  if (addrSection && checkoutOpen) addrSection.style.display = 'block';
+  if (addrSection) addrSection.style.display = 'block';
+
+  const sel = document.getElementById('addrQuickSelect');
+  if (!sel) return;
+
+  if (!savedAddresses || savedAddresses.length === 0) {
+    sel.innerHTML = '<option value="">尚無常用收件資料</option>';
+    return;
+  }
+
+  const typeLabel = { '711': '7-11', 'family': '全家', 'mail': '郵寄' };
+  sel.innerHTML = '<option value="">請選擇常用收件資料</option>' + savedAddresses.map((a, i) => {
+    const label = a.type === 'mail'
+      ? `${a.名稱 || a.收件人 || '未命名'}｜${typeLabel[a.type] || ''}｜${a.地址 || ''}`
+      : `${a.名稱 || a.收件人 || '未命名'}｜${typeLabel[a.type] || ''}｜${a.店名 || ''}${a.店號 ? ' ' + a.店號 : ''}`;
+    return `<option value="${i}">${escapeHtml(label)}</option>`;
+  }).join('');
+}
+
+function escapeHtml(str) {
+  return String(str || '').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+}
+
+function applySelectedAddress() {
+  const sel = document.getElementById('addrQuickSelect');
+  if (!sel || sel.value === '') { showAddrHint('請先選擇一筆常用收件資料', '#e67e22'); return; }
+  applyAddrFromModal(Number(sel.value));
+}
+
+async function addressApiPost(action, payload) {
+  // 自己的 Google Sheet Web App：用 text/plain 避免瀏覽器預檢造成麻煩，因為網頁世界就是這麼可愛。
+  if (ADDRESS_WEB_APP_URL) {
+    const res = await fetch(ADDRESS_WEB_APP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action, ...payload })
+    });
+    return await res.json();
+  }
+
+  // 原本雲端 API
+  const path = action === 'get' ? '/get-addresses' : '/save-addresses';
+  const res = await fetch(LOGIN_API_URL + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return await res.json();
 }
 
 function openAddrModal() {
@@ -2355,11 +2406,7 @@ async function deleteAddrFromModal(idx) {
   const name = savedAddresses[idx].名稱;
   savedAddresses.splice(idx, 1);
   try {
-    await fetch(LOGIN_API_URL + '/save-addresses', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ account: currentMemberAccount, addresses: savedAddresses })
-    });
+    addressApiPost('save', { account: currentMemberAccount, addresses: savedAddresses });
     renderAddrSelect();
     openAddrModal(); // 重新渲染彈窗
     showAddrHint('🗑️ 已刪除：' + name, '#888');
@@ -2392,11 +2439,7 @@ async function saveCurrentAddrFromModal() {
   if (existing >= 0) savedAddresses[existing] = newAddr;
   else savedAddresses.push(newAddr);
   try {
-    const res = await fetch(LOGIN_API_URL + '/save-addresses', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ account: currentMemberAccount, addresses: savedAddresses })
-    });
+    const res = addressApiPost('save', { account: currentMemberAccount, addresses: savedAddresses });
     const data = await res.json();
     if (data.success) {
       renderAddrSelect();
@@ -2438,12 +2481,7 @@ function doLogout() {
 async function loadAddresses(account) {
   currentMemberAccount = account;
   try {
-    const res = await fetch(LOGIN_API_URL + '/get-addresses', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ account })
-    });
-    const data = await res.json();
+    const data = await addressApiPost('get', { account });
     if (data.success) {
       savedAddresses = data.addresses || [];
       renderAddrSelect();
