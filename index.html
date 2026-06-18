@@ -2575,24 +2575,6 @@ function doLogout() {
   if (pwEl) pwEl.value = '';
 }
 
-async function loadAddresses(account) {
-  currentMemberAccount = account;
-  try {
-    const data = await addressApiPost('get', { account });
-    if (data.success) {
-      savedAddresses = data.addresses || [];
-      renderAddrSelect();
-    }
-  } catch(e) { console.log('載入收件資料失敗', e); }
-}
-
-function showAddrHint(msg, color) {
-  const el = document.getElementById('addrSaveHint');
-  if (!el) return;
-  el.textContent = msg;
-  el.style.color = color || '#888';
-  setTimeout(() => { el.textContent = ''; }, 3000);
-}
 
 
 // ===== INIT =====
