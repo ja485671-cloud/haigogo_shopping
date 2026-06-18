@@ -1347,8 +1347,11 @@ body {
 
             <!-- 常用收件資料按鈕 -->
       <div id="savedAddrSection" style="display:none;margin-bottom:14px;">
-        <button type="button" onclick="openAddrModal()" style="width:100%;padding:9px 14px;background:#f9f6ef;border:1px solid #e0d4b0;border-radius:8px;font-size:0.85rem;font-weight:600;color:#7a6000;cursor:pointer;font-family:inherit;text-align:left;">
+        <button type="button" onclick="openAddrModal()" style="width:100%;padding:9px 14px;background:#f9f6ef;border:1px solid #e0d4b0;border-radius:8px;font-size:0.85rem;font-weight:600;color:#7a6000;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:8px;">
           📋 常用收件資料　<span style="float:right;color:#aaa;font-weight:400;">點選套入 ›</span>
+        </button>
+        <button type="button" onclick="saveCurrentAddrFromModal()" style="width:100%;padding:10px 14px;background:#c9a96e;color:#1a1208;border:none;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;">
+          ＋ 儲存目前填寫的收件資料
         </button>
         <div class="addr-save-hint" id="addrSaveHint" style="font-size:0.75rem;color:#aaa;margin-top:4px;"></div>
       </div>
@@ -1979,14 +1982,13 @@ function openCheckout() {
   document.getElementById('checkoutOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
   updatePreview();
-  // 顯示常用收件資料（如果有資料）
+  // 顯示常用收件資料區塊：即使目前沒有資料，也要讓使用者可以儲存
   const addrSection = document.getElementById('savedAddrSection');
-  if (addrSection) {
-    addrSection.style.display = savedAddresses.length > 0 ? 'block' : 'none';
-  }
+  if (addrSection) addrSection.style.display = 'block';
+
   // 如果已登入但還沒載入過，重新嘗試載入
   if (currentMemberAccount === '') {
-    const savedAcc = sessionStorage.getItem('haigogo_account');
+    const savedAcc = localStorage.getItem('haigogo_account');
     if (savedAcc) loadAddresses(savedAcc);
   }
 }
@@ -2226,9 +2228,9 @@ const LOGIN_API_URL = 'https://haigogo-productlookup-792929696060.us-central1.ru
 const MEMBER_SHEET_GID = '1919324458';
 
 function checkAlreadyLoggedIn() {
-  const token = sessionStorage.getItem('haigogo_token');
-  const savedAcc = sessionStorage.getItem('haigogo_account');
-  const savedName = sessionStorage.getItem('haigogo_name');
+  const token = localStorage.getItem('haigogo_token');
+  const savedAcc = localStorage.getItem('haigogo_account');
+  const savedName = localStorage.getItem('haigogo_name');
   if (token === 'loggedin' && savedAcc) {
     document.getElementById('loginOverlay').classList.add('hidden');
     updateLoginStatus(savedAcc, savedName || savedAcc);
@@ -2262,9 +2264,9 @@ async function doLogin() {
     });
     const data = await res.json();
     if (data.success) {
-      sessionStorage.setItem('haigogo_token', 'loggedin');
-      sessionStorage.setItem('haigogo_account', account);
-      sessionStorage.setItem('haigogo_name', data.name || account);
+      localStorage.setItem('haigogo_token', 'loggedin');
+      localStorage.setItem('haigogo_account', account);
+      localStorage.setItem('haigogo_name', data.name || account);
       document.getElementById('loginOverlay').classList.add('hidden');
       updateLoginStatus(account, data.name || account);
       loadAddresses(account);
@@ -2297,11 +2299,10 @@ let currentMemberAccount = '';
 let currentMemberName = '';
 
 function renderAddrSelect() {
-  // 舊的 select 已移除，改用 renderAddrModal
+  // 舊的 select 已移除，改用彈窗；訂單彈窗開啟時一律顯示常用收件資料區塊
+  const checkoutOpen = document.getElementById('checkoutOverlay')?.classList.contains('show');
   const addrSection = document.getElementById('savedAddrSection');
-  if (addrSection) {
-    addrSection.style.display = savedAddresses.length > 0 ? 'block' : 'none';
-  }
+  if (addrSection && checkoutOpen) addrSection.style.display = 'block';
 }
 
 function openAddrModal() {
@@ -2418,9 +2419,9 @@ function updateLoginStatus(account, name) {
 }
 
 function doLogout() {
-  sessionStorage.removeItem('haigogo_token');
-  sessionStorage.removeItem('haigogo_account');
-  sessionStorage.removeItem('haigogo_name');
+  localStorage.removeItem('haigogo_token');
+  localStorage.removeItem('haigogo_account');
+  localStorage.removeItem('haigogo_name');
   currentMemberAccount = '';
   currentMemberName = '';
   savedAddresses = [];
