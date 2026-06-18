@@ -2238,7 +2238,7 @@ async function verifyMemberEligibility() {
 const LOGIN_API_URL = 'https://haigogo-productlookup-792929696060.us-central1.run.app';
 // ✅ 若你要改成直接存到自己的 Google Sheet，貼上 Apps Script Web App URL
 // 沒貼的話，會沿用原本雲端 API。
-const ADDRESS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzRsLLq0eSTZVPKyNtGuHKw6J2Sl-pDib6rSDNNlqaP0XoKfi7XP4B5cfhprERHGnL3Cw/exec';
+const ADDRESS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz-W2g-PWLA4FzovfX1vdle7A9bKjOn73-pcXudnzvYdZ8xwKv6rfsjT9tUH_9JWy-OUg/exec';
 const MEMBER_SHEET_GID = '1919324458';
 
 function checkAlreadyLoggedIn() {
@@ -2370,18 +2370,15 @@ async function addressApiPost(action, payload) {
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action, ...payload })
     });
-
     return await res.json();
   }
 
   const path = action === 'get' ? '/get-addresses' : '/save-addresses';
-
   const res = await fetch(LOGIN_API_URL + path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
-
   return await res.json();
 }
 
@@ -2578,6 +2575,24 @@ function doLogout() {
   if (pwEl) pwEl.value = '';
 }
 
+async function loadAddresses(account) {
+  currentMemberAccount = account;
+  try {
+    const data = await addressApiPost('get', { account });
+    if (data.success) {
+      savedAddresses = data.addresses || [];
+      renderAddrSelect();
+    }
+  } catch(e) { console.log('載入收件資料失敗', e); }
+}
+
+function showAddrHint(msg, color) {
+  const el = document.getElementById('addrSaveHint');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = color || '#888';
+  setTimeout(() => { el.textContent = ''; }, 3000);
+}
 
 
 // ===== INIT =====
