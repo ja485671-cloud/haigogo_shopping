@@ -1032,6 +1032,109 @@ body {
   color: #aaa;
   margin-top: 6px;
 }
+
+/* ===== 登入狀態 ===== */
+.login-status {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255,255,255,0.85);
+  font-size: 0.8rem;
+}
+.login-status.show { display: flex; }
+.login-name { color: var(--gold); font-weight: 600; }
+.logout-btn {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 16px;
+  padding: 4px 12px;
+  color: rgba(255,255,255,0.7);
+  font-size: 0.75rem;
+  cursor: pointer;
+  font-family: 'Noto Sans TC', sans-serif;
+  transition: all 0.2s;
+}
+.logout-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+/* ===== 收件資料彈窗 ===== */
+.addr-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 600;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.addr-modal-overlay.show { display: flex; }
+.addr-modal {
+  background: #fff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+  animation: modalIn 0.2s ease;
+}
+.addr-modal-header {
+  background: var(--ink);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.addr-modal-title { color: var(--gold); font-weight: 700; font-size: 0.95rem; font-family: 'Noto Serif TC', serif; }
+.addr-modal-close {
+  background: none; border: none; color: rgba(255,255,255,0.6);
+  font-size: 1.2rem; cursor: pointer;
+}
+.addr-modal-close:hover { color: #fff; }
+.addr-modal-body { flex: 1; overflow-y: auto; padding: 12px; }
+.addr-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.addr-card:hover { border-color: var(--gold); background: #fffdf5; }
+.addr-card-icon { font-size: 1.4rem; flex-shrink: 0; }
+.addr-card-info { flex: 1; min-width: 0; }
+.addr-card-name { font-size: 0.88rem; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+.addr-card-detail { font-size: 0.78rem; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.addr-card-del {
+  background: none; border: none; color: #ddd;
+  font-size: 1rem; cursor: pointer; padding: 4px; flex-shrink: 0;
+}
+.addr-card-del:hover { color: #e74c3c; }
+.addr-modal-footer {
+  padding: 12px 16px;
+  border-top: 1px solid #eee;
+  display: flex;
+  gap: 8px;
+}
+.addr-modal-save-btn {
+  flex: 1;
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Noto Sans TC', sans-serif;
+}
+.addr-modal-save-btn:hover { background: var(--gold-dark); color: #fff; }
+.addr-empty { text-align: center; padding: 30px 20px; color: #bbb; font-size: 0.85rem; }
 </style>
 </head>
 <body>
@@ -1066,6 +1169,10 @@ body {
       <div class="search-wrap">
         <input type="text" class="search-input" id="searchInput" placeholder="搜尋產品…">
         <span class="search-icon">🔍</span>
+      </div>
+      <div class="login-status" id="loginStatus">
+        <span>👤 <span class="login-name" id="loginStatusName"></span></span>
+        <button class="logout-btn" onclick="doLogout()">登出</button>
       </div>
       <button class="cart-btn" onclick="toggleCart()">
         🛒 購物車
@@ -1238,18 +1345,12 @@ body {
         </div>
       </div>
 
-            <!-- 常用收件資料 -->
-      <div class="addr-section" id="savedAddrSection" style="display:none">
-        <div class="addr-section-title">📋 常用收件資料</div>
-        <div class="addr-select-row">
-          <select class="addr-select" id="savedAddrSelect">
-            <option value="">── 選擇常用收件資料套入 ──</option>
-          </select>
-          <button class="addr-action-btn" onclick="applySavedAddr()">套入</button>
-          <button class="addr-action-btn" onclick="saveCurrentAddr()">儲存目前</button>
-          <button class="addr-action-btn del" onclick="deleteSelectedAddr()">刪除</button>
-        </div>
-        <div class="addr-save-hint" id="addrSaveHint"></div>
+            <!-- 常用收件資料按鈕 -->
+      <div id="savedAddrSection" style="display:none;margin-bottom:14px;">
+        <button type="button" onclick="openAddrModal()" style="width:100%;padding:9px 14px;background:#f9f6ef;border:1px solid #e0d4b0;border-radius:8px;font-size:0.85rem;font-weight:600;color:#7a6000;cursor:pointer;font-family:inherit;text-align:left;">
+          📋 常用收件資料　<span style="float:right;color:#aaa;font-weight:400;">點選套入 ›</span>
+        </button>
+        <div class="addr-save-hint" id="addrSaveHint" style="font-size:0.75rem;color:#aaa;margin-top:4px;"></div>
       </div>
 
 <div class="form-section" id="memberVerifySection">
@@ -1320,6 +1421,21 @@ body {
         <button class="generate-btn" onclick="generateOrder()">產生訂單</button>
         <button class="copy-btn" id="copyBtn" onclick="copyOrder()">複製訂單（貼到 LINE）</button>
       </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- 收件資料彈窗 -->
+<div class="addr-modal-overlay" id="addrModalOverlay">
+  <div class="addr-modal">
+    <div class="addr-modal-header">
+      <div class="addr-modal-title">📋 常用收件資料</div>
+      <button class="addr-modal-close" onclick="closeAddrModal()">✕</button>
+    </div>
+    <div class="addr-modal-body" id="addrModalBody"></div>
+    <div class="addr-modal-footer">
+      <button class="addr-modal-save-btn" onclick="saveCurrentAddrFromModal()">＋ 儲存目前填寫的收件資料</button>
     </div>
   </div>
 </div>
@@ -1863,6 +1979,16 @@ function openCheckout() {
   document.getElementById('checkoutOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
   updatePreview();
+  // 顯示常用收件資料（如果有資料）
+  const addrSection = document.getElementById('savedAddrSection');
+  if (addrSection) {
+    addrSection.style.display = savedAddresses.length > 0 ? 'block' : 'none';
+  }
+  // 如果已登入但還沒載入過，重新嘗試載入
+  if (currentMemberAccount === '') {
+    const savedAcc = sessionStorage.getItem('haigogo_account');
+    if (savedAcc) loadAddresses(savedAcc);
+  }
 }
 
 function closeCheckout() {
@@ -2102,8 +2228,10 @@ const MEMBER_SHEET_GID = '1919324458';
 function checkAlreadyLoggedIn() {
   const token = sessionStorage.getItem('haigogo_token');
   const savedAcc = sessionStorage.getItem('haigogo_account');
+  const savedName = sessionStorage.getItem('haigogo_name');
   if (token === 'loggedin' && savedAcc) {
     document.getElementById('loginOverlay').classList.add('hidden');
+    updateLoginStatus(savedAcc, savedName || savedAcc);
     loadAddresses(savedAcc);
     return true;
   }
@@ -2136,7 +2264,9 @@ async function doLogin() {
     if (data.success) {
       sessionStorage.setItem('haigogo_token', 'loggedin');
       sessionStorage.setItem('haigogo_account', account);
+      sessionStorage.setItem('haigogo_name', data.name || account);
       document.getElementById('loginOverlay').classList.add('hidden');
+      updateLoginStatus(account, data.name || account);
       loadAddresses(account);
     } else {
       errEl.textContent = data.error || '帳號或密碼錯誤';
@@ -2164,16 +2294,144 @@ document.addEventListener('DOMContentLoaded', () => {
 // ===== 常用收件資料 =====
 let savedAddresses = [];
 let currentMemberAccount = '';
+let currentMemberName = '';
 
 function renderAddrSelect() {
-  const sel = document.getElementById('savedAddrSelect');
-  sel.innerHTML = '<option value="">── 選擇常用收件資料套入 ──</option>';
-  savedAddresses.forEach((a, i) => {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = a.名稱 + '（' + (a.type === 'mail' ? '郵寄' : a.type === 'family' ? '全家' : '7-11') + '）';
-    sel.appendChild(opt);
-  });
+  // 舊的 select 已移除，改用 renderAddrModal
+  const addrSection = document.getElementById('savedAddrSection');
+  if (addrSection) {
+    addrSection.style.display = savedAddresses.length > 0 ? 'block' : 'none';
+  }
+}
+
+function openAddrModal() {
+  const body = document.getElementById('addrModalBody');
+  if (savedAddresses.length === 0) {
+    body.innerHTML = '<div class="addr-empty">尚無常用收件資料<br>填寫收件資料後按下方按鈕儲存</div>';
+  } else {
+    const typeIcon = { '711': '🏪', 'family': '🏪', 'mail': '📮' };
+    const typeLabel = { '711': '7-11', 'family': '全家', 'mail': '郵寄' };
+    body.innerHTML = savedAddresses.map((a, i) => `
+      <div class="addr-card" onclick="applyAddrFromModal(${i})">
+        <div class="addr-card-icon">${typeIcon[a.type] || '📦'}</div>
+        <div class="addr-card-info">
+          <div class="addr-card-name">${a.名稱}　<span style="font-size:0.75rem;color:#aaa;font-weight:400;">${typeLabel[a.type] || ''}</span></div>
+          <div class="addr-card-detail">${a.type === 'mail' ? (a.收件人 + '　' + a.電話 + '　' + a.地址) : (a.收件人 + '　' + a.電話 + '　' + a.店名 + ' ' + a.店號)}</div>
+        </div>
+        <button class="addr-card-del" onclick="event.stopPropagation();deleteAddrFromModal(${i})" title="刪除">✕</button>
+      </div>
+    `).join('');
+  }
+  document.getElementById('addrModalOverlay').classList.add('show');
+}
+
+function closeAddrModal() {
+  document.getElementById('addrModalOverlay').classList.remove('show');
+}
+
+function applyAddrFromModal(idx) {
+  const a = savedAddresses[idx];
+  if (!a) return;
+  const shipSel = document.getElementById('f_ship_type');
+  shipSel.value = a.type || '711';
+  updateShipFields();
+  if (a.type === 'mail') {
+    document.getElementById('f_mail_name').value = a.收件人 || '';
+    document.getElementById('f_mail_phone').value = a.電話 || '';
+    document.getElementById('f_mail_addr').value = a.地址 || '';
+  } else {
+    document.getElementById('f_recv_name').value = a.收件人 || '';
+    document.getElementById('f_recv_phone').value = a.電話 || '';
+    document.getElementById('f_store_name').value = a.店名 || '';
+    document.getElementById('f_store_num').value = a.店號 || '';
+  }
+  updatePreview();
+  closeAddrModal();
+  showAddrHint('✅ 已套入：' + a.名稱, '#27ae60');
+}
+
+async function deleteAddrFromModal(idx) {
+  const name = savedAddresses[idx].名稱;
+  savedAddresses.splice(idx, 1);
+  try {
+    await fetch(LOGIN_API_URL + '/save-addresses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ account: currentMemberAccount, addresses: savedAddresses })
+    });
+    renderAddrSelect();
+    openAddrModal(); // 重新渲染彈窗
+    showAddrHint('🗑️ 已刪除：' + name, '#888');
+  } catch(e) {
+    showAddrHint('❌ 刪除失敗', '#e74c3c');
+  }
+}
+
+async function saveCurrentAddrFromModal() {
+  if (!currentMemberAccount) { showAddrHint('❌ 請先登入', '#e74c3c'); return; }
+  const shipType = document.getElementById('f_ship_type').value;
+  let newAddr = { type: shipType };
+  if (shipType === 'mail') {
+    const name = document.getElementById('f_mail_name').value.trim();
+    const phone = document.getElementById('f_mail_phone').value.trim();
+    const addr = document.getElementById('f_mail_addr').value.trim();
+    if (!name && !addr) { closeAddrModal(); showAddrHint('❌ 請先填寫收件人或地址', '#e74c3c'); return; }
+    newAddr.收件人 = name; newAddr.電話 = phone; newAddr.地址 = addr;
+    newAddr.名稱 = name || addr.substring(0, 10);
+  } else {
+    const name = document.getElementById('f_recv_name').value.trim();
+    const phone = document.getElementById('f_recv_phone').value.trim();
+    const storeName = document.getElementById('f_store_name').value.trim();
+    const storeNum = document.getElementById('f_store_num').value.trim();
+    if (!name && !storeName) { closeAddrModal(); showAddrHint('❌ 請先填寫收件人或店名', '#e74c3c'); return; }
+    newAddr.收件人 = name; newAddr.電話 = phone; newAddr.店名 = storeName; newAddr.店號 = storeNum;
+    newAddr.名稱 = name || storeName;
+  }
+  const existing = savedAddresses.findIndex(a => a.名稱 === newAddr.名稱 && a.type === newAddr.type);
+  if (existing >= 0) savedAddresses[existing] = newAddr;
+  else savedAddresses.push(newAddr);
+  try {
+    const res = await fetch(LOGIN_API_URL + '/save-addresses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ account: currentMemberAccount, addresses: savedAddresses })
+    });
+    const data = await res.json();
+    if (data.success) {
+      renderAddrSelect();
+      closeAddrModal();
+      showAddrHint('✅ 已儲存：' + newAddr.名稱, '#27ae60');
+    } else {
+      showAddrHint('❌ 儲存失敗', '#e74c3c');
+    }
+  } catch(e) { showAddrHint('❌ 無法連線', '#e74c3c'); }
+}
+
+
+function updateLoginStatus(account, name) {
+  currentMemberAccount = account;
+  currentMemberName = name;
+  const statusEl = document.getElementById('loginStatus');
+  const nameEl = document.getElementById('loginStatusName');
+  if (statusEl) statusEl.classList.add('show');
+  if (nameEl) nameEl.textContent = name;
+}
+
+function doLogout() {
+  sessionStorage.removeItem('haigogo_token');
+  sessionStorage.removeItem('haigogo_account');
+  sessionStorage.removeItem('haigogo_name');
+  currentMemberAccount = '';
+  currentMemberName = '';
+  savedAddresses = [];
+  const statusEl = document.getElementById('loginStatus');
+  if (statusEl) statusEl.classList.remove('show');
+  document.getElementById('loginOverlay').classList.remove('hidden');
+  // 清空登入欄位
+  const accEl = document.getElementById('loginAccount');
+  const pwEl = document.getElementById('loginPassword');
+  if (accEl) accEl.value = '';
+  if (pwEl) pwEl.value = '';
 }
 
 async function loadAddresses(account) {
@@ -2188,117 +2446,18 @@ async function loadAddresses(account) {
     if (data.success) {
       savedAddresses = data.addresses || [];
       renderAddrSelect();
-      if (savedAddresses.length > 0) {
-        document.getElementById('savedAddrSection').style.display = 'block';
-      }
     }
   } catch(e) { console.log('載入收件資料失敗', e); }
 }
 
-function applySavedAddr() {
-  const sel = document.getElementById('savedAddrSelect');
-  const idx = parseInt(sel.value);
-  if (isNaN(idx)) return;
-  const a = savedAddresses[idx];
-  if (!a) return;
-
-  // 先切換收件方式
-  const shipSel = document.getElementById('f_ship_type');
-  shipSel.value = a.type || '711';
-  updateShipFields();
-
-  if (a.type === 'mail') {
-    document.getElementById('f_mail_name').value = a.收件人 || '';
-    document.getElementById('f_mail_phone').value = a.電話 || '';
-    document.getElementById('f_mail_addr').value = a.地址 || '';
-  } else {
-    document.getElementById('f_recv_name').value = a.收件人 || '';
-    document.getElementById('f_recv_phone').value = a.電話 || '';
-    document.getElementById('f_store_name').value = a.店名 || '';
-    document.getElementById('f_store_num').value = a.店號 || '';
-  }
-  updatePreview();
-  showAddrHint('✅ 已套入：' + a.名稱, '#27ae60');
-}
-
-async function saveCurrentAddr() {
-  if (!currentMemberAccount) {
-    showAddrHint('❌ 請先登入再儲存', '#e74c3c');
-    return;
-  }
-  const shipType = document.getElementById('f_ship_type').value;
-  let newAddr = { type: shipType };
-
-  if (shipType === 'mail') {
-    const name = document.getElementById('f_mail_name').value.trim();
-    const phone = document.getElementById('f_mail_phone').value.trim();
-    const addr = document.getElementById('f_mail_addr').value.trim();
-    if (!name && !addr) { showAddrHint('❌ 請先填寫收件人或地址', '#e74c3c'); return; }
-    newAddr.收件人 = name; newAddr.電話 = phone; newAddr.地址 = addr;
-    newAddr.名稱 = name || addr.substring(0, 10);
-  } else {
-    const name = document.getElementById('f_recv_name').value.trim();
-    const phone = document.getElementById('f_recv_phone').value.trim();
-    const storeName = document.getElementById('f_store_name').value.trim();
-    const storeNum = document.getElementById('f_store_num').value.trim();
-    if (!name && !storeName) { showAddrHint('❌ 請先填寫收件人或店名', '#e74c3c'); return; }
-    newAddr.收件人 = name; newAddr.電話 = phone; newAddr.店名 = storeName; newAddr.店號 = storeNum;
-    newAddr.名稱 = name || storeName;
-  }
-
-  // 如果已有同名的就更新，否則新增
-  const existing = savedAddresses.findIndex(a => a.名稱 === newAddr.名稱 && a.type === newAddr.type);
-  if (existing >= 0) {
-    savedAddresses[existing] = newAddr;
-  } else {
-    savedAddresses.push(newAddr);
-  }
-
-  try {
-    const res = await fetch(LOGIN_API_URL + '/save-addresses', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ account: currentMemberAccount, addresses: savedAddresses })
-    });
-    const data = await res.json();
-    if (data.success) {
-      renderAddrSelect();
-      document.getElementById('savedAddrSection').style.display = 'block';
-      showAddrHint('✅ 已儲存：' + newAddr.名稱, '#27ae60');
-    } else {
-      showAddrHint('❌ 儲存失敗：' + (data.error || ''), '#e74c3c');
-    }
-  } catch(e) {
-    showAddrHint('❌ 無法連線，儲存失敗', '#e74c3c');
-  }
-}
-
-async function deleteSelectedAddr() {
-  const sel = document.getElementById('savedAddrSelect');
-  const idx = parseInt(sel.value);
-  if (isNaN(idx)) { showAddrHint('請先選擇要刪除的資料', '#e67e22'); return; }
-  const name = savedAddresses[idx].名稱;
-  savedAddresses.splice(idx, 1);
-  try {
-    await fetch(LOGIN_API_URL + '/save-addresses', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ account: currentMemberAccount, addresses: savedAddresses })
-    });
-    renderAddrSelect();
-    if (savedAddresses.length === 0) document.getElementById('savedAddrSection').style.display = 'none';
-    showAddrHint('🗑️ 已刪除：' + name, '#888');
-  } catch(e) {
-    showAddrHint('❌ 刪除失敗', '#e74c3c');
-  }
-}
-
 function showAddrHint(msg, color) {
   const el = document.getElementById('addrSaveHint');
+  if (!el) return;
   el.textContent = msg;
   el.style.color = color || '#888';
   setTimeout(() => { el.textContent = ''; }, 3000);
 }
+
 
 // ===== INIT =====
 loadData();
