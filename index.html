@@ -1082,6 +1082,13 @@ body {
     <select class="filter-select" id="categorySelect">
       <option value="">全部品類</option>
     </select>
+    <span class="filter-label">專區</span>
+    <select class="filter-select" id="sectionSelect">
+      <option value="">全部商品</option>
+      <option value="特惠組">特惠組</option>
+      <option value="超級特惠單瓶價">單瓶特惠</option>
+      <option value="一般商品">一般商品</option>
+    </select>
     <span class="result-count" id="resultCount"></span>
   </div>
 </header>
@@ -1129,14 +1136,16 @@ body {
             <div class="modal-pv" id="modalPv"></div>
           </div>
         </div>
-        <div class="qty-row">
-          <span class="qty-label">數量</span>
+        <div id="bundleBlock" style="display:none;background:#fff8e7;border:1px solid #ead39a;border-radius:10px;padding:12px;margin-bottom:14px;font-size:0.82rem;line-height:1.7;color:#72510c;"></div>
+        <div class="qty-row" id="modalQtyRow">
+          <span class="qty-label" id="modalQtyLabel">數量</span>
           <div class="qty-ctrl">
             <button class="qty-btn" onclick="changeQty(-1)">−</button>
             <input class="qty-num" id="modalQty" type="number" value="1" min="1" max="99" readonly>
             <button class="qty-btn" onclick="changeQty(1)">＋</button>
           </div>
         </div>
+        <div id="modalQtyTotal" style="min-height:22px;margin:-8px 0 14px;color:#9b6c16;font-size:0.82rem;font-weight:700;"></div>
         <button class="modal-add-btn" id="modalAddBtn" onclick="addToCartFromModal()">加入購物車</button>
       </div>
     </div>
@@ -1238,21 +1247,7 @@ body {
         </div>
       </div>
 
-            <!-- 常用收件資料 -->
-      <div class="addr-section" id="savedAddrSection" style="display:none">
-        <div class="addr-section-title">📋 常用收件資料</div>
-        <div class="addr-select-row">
-          <select class="addr-select" id="savedAddrSelect">
-            <option value="">── 選擇常用收件資料套入 ──</option>
-          </select>
-          <button class="addr-action-btn" onclick="applySavedAddr()">套入</button>
-          <button class="addr-action-btn" onclick="saveCurrentAddr()">儲存目前</button>
-          <button class="addr-action-btn del" onclick="deleteSelectedAddr()">刪除</button>
-        </div>
-        <div class="addr-save-hint" id="addrSaveHint"></div>
-      </div>
-
-<div class="form-section" id="memberVerifySection">
+      <div class="form-section" id="memberVerifySection">
         <div class="form-section-title">帳號購買資格驗證</div>
         <button type="button" id="verifyBtn" onclick="verifyMemberEligibility()" style="width:100%;padding:10px 14px;background:linear-gradient(135deg,#3a5fc0,#6a3fc0);color:#fff;border:none;border-radius:8px;font-size:0.88rem;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:0.03em;">🔍 驗證此帳號能否購買購物車商品</button>
         <div id="verifyResult" style="display:none;margin-top:12px;border-radius:10px;padding:14px 16px;font-size:0.84rem;line-height:2;border:1px solid #e0e0e0;"></div>
@@ -1347,8 +1342,9 @@ body {
 <script src="https://www.gstatic.com/charts/loader.js"></script>
 <script>
 // ===== CONFIG =====
-const SHEET_ID = '1iu7_CAaPMRi5c0lB649jXgTAlD-vPCTM9melAaH7PIU';
-const GID = '2087310803';// 工作表1的GID
+const SHEET_ID = '1ESEOdtHzMJ6EKTLtldQvURq8xL30uoGfFlZEB06PiNM';
+const PRODUCT_SHEET = '商品主檔';
+const OFFER_SHEET = '販售方案';
 
 const MIN_ORDERS = {
   '韓國': 1800, '日本': 2600, '馬來西亞': 2800,
@@ -1508,6 +1504,116 @@ ${headers.join(' | ')}
     }
   }
 };
+
+function queryNewSheet(sheetName) {
+  return new Promise((resolve, reject) => {
+    const url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(SHEET_ID)}/gviz/tq?sheet=${encodeURIComponent(sheetName)}`;
+    const query = new google.visualization.Query(url);
+    query.send(response => {
+      if (response.isError && response.isError()) {
+        reject(new Error(`${sheetName}：${response.getMessage()}`));
+        return;
+      }
+      const table = response.getDataTable();
+      const headers = [];
+      for (let column = 0; column < table.getNumberOfColumns(); column += 1) {
+        headers.push((table.getColumnLabel(column) || '').trim());
+      }
+      const rows = [];
+      for (let row = 0; row < table.getNumberOfRows(); row += 1) {
+        const object = {};
+        headers.forEach((header, column) => {
+          const value = table.getValue(row, column);
+          object[header] = value == null ? '' : value;
+        });
+        rows.push(object);
+      }
+      resolve(rows);
+    });
+  });
+}
+
+function numberValue(value) {
+  const parsed = Number(String(value == null ? '' : value).replace(/,/g, ''));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function countryName(code) {
+  return ({ KR: '韓國', JP: '日本', MY: '馬來西亞', US: '美國', HK: '香港', NZ: '紐西蘭', AU: '澳洲' })[String(code)] || String(code || '');
+}
+
+function offerIsVisible(offer) {
+  if (String(offer['是否上架'] || '') === '否') return false;
+  const now = new Date();
+  const start = offer['活動開始'] ? new Date(offer['活動開始']) : null;
+  const end = offer['活動結束'] ? new Date(offer['活動結束']) : null;
+  if (start && !Number.isNaN(start.getTime()) && start > now) return false;
+  if (end && !Number.isNaN(end.getTime())) {
+    end.setHours(23, 59, 59, 999);
+    if (end < now) return false;
+  }
+  return numberValue(offer['基準報價TWD']) > 0;
+}
+
+function joinProductDatabase(products, offers) {
+  const productById = new Map(products.map(product => [String(product['商品ID'] || ''), product]));
+  return offers.filter(offerIsVisible).map(offer => {
+    const product = productById.get(String(offer['商品ID'] || ''));
+    if (!product || String(product['官網狀態'] || '').includes('下架')) return null;
+    const country = countryName(product['國家代碼']);
+    return {
+      '流水號': String(offer['流水號'] || ''),
+      '官網編號': String(product['官網編號'] || ''),
+      '產品名稱': String(product['中文商品名稱'] || product['官網原文名稱'] || ''),
+      '國家': country,
+      '品類': String(product['品類'] || '其他'),
+      '類型': String(product['網站專區'] || '一般商品'),
+      '單瓶對應流水號': String(offer['基礎方案流水號'] || ''),
+      '台幣價格': numberValue(offer['基準報價TWD']),
+      'PV': numberValue(offer['方案PV']),
+      '最低訂單金額': MIN_ORDERS[country] || 0,
+      '備註': '',
+      '圖片網址': String(product['圖片網址'] || ''),
+      '產品介紹': '',
+      '是否上架': '是',
+      '_商品ID': String(product['商品ID'] || ''),
+      '_販售方式': String(offer['販售方式'] || ''),
+      '_計價方式': String(offer['計價方式'] || ''),
+      '_計量單位': String(offer['計量單位'] || '件'),
+      '_基準數量': Math.max(1, numberValue(offer['基準數量']) || 1),
+      '_最低購買數量': Math.max(1, numberValue(offer['最低購買數量']) || 1),
+      '_增加間隔': Math.max(1, numberValue(offer['增加間隔']) || 1),
+      '_網站排序': numberValue(offer['網站排序']),
+    };
+  }).filter(Boolean).sort((a, b) => a._網站排序 - b._網站排序);
+}
+
+async function loadNewDatabase() {
+  const loading = document.getElementById('loading');
+  const grid = document.getElementById('productGrid');
+  if (loading) {
+    loading.style.display = 'flex';
+    loading.textContent = '正在讀取最新商品資料…';
+  }
+  if (grid) grid.style.display = 'none';
+  try {
+    google.charts.load('current', { packages: ['corechart'] });
+    await new Promise(resolve => google.charts.setOnLoadCallback(resolve));
+    const [products, offers] = await Promise.all([
+      queryNewSheet(PRODUCT_SHEET),
+      queryNewSheet(OFFER_SHEET),
+    ]);
+    allProducts = joinProductDatabase(products, offers);
+    initFilters();
+    applyFilters();
+    updateNotice();
+    loading.style.display = 'none';
+    grid.style.display = 'grid';
+  } catch (error) {
+    loading.style.display = 'flex';
+    loading.innerHTML = `<div style="color:#c0392b;text-align:center;padding:20px;line-height:1.7"><strong>商品資料載入失敗</strong><br><span style="font-size:0.82rem;color:#777">${escapeHtml(error.message || String(error))}</span></div>`;
+  }
+}
 // ===== FILTERS =====
 function initFilters() {
   const countries = [...new Set(allProducts.map(p => p['國家']).filter(Boolean))];
@@ -1523,6 +1629,7 @@ function initFilters() {
 
   cs.addEventListener('change', () => { updateCategoryOptions(); applyFilters(); updateNotice(); });
   document.getElementById('categorySelect').addEventListener('change', applyFilters);
+  document.getElementById('sectionSelect').addEventListener('change', applyFilters);
   document.getElementById('searchInput').addEventListener('input', applyFilters);
   document.getElementById('sortSelect').addEventListener('change', applyFilters);
 
@@ -1571,7 +1678,7 @@ function updateCategoryOptions() {
 
   let prods = country ? allProducts.filter(p => p['國家'] === country) : allProducts;
   const cats = [...new Set(prods.map(p => p['品類']).filter(c => c))];
-  const catOrder = ['特惠組','超級特惠單瓶價','保健食品系列','護膚系列','美妝防曬系列','美妝眼部系列','美妝臉部系列','美妝唇部系列','美容配件系列','頭髮系列','身體系列','口腔系列','清潔用品系列','廚房用品系列','香氛系列','家居系列','飲品系列','食品系列','調味料系列','內衣褲系列','其他'];
+  const catOrder = ['保健食品系列','護膚系列','美妝防曬系列','美妝眼部系列','美妝臉部系列','美妝唇部系列','美容配件系列','頭髮系列','身體系列','口腔系列','清潔用品系列','廚房用品系列','香氛系列','家居系列','飲品系列','食品系列','調味料系列','內衣褲系列','其他'];
   const sorted = catOrder.filter(c => cats.includes(c));
   sorted.forEach(c => {
     const o = document.createElement('option');
@@ -1584,12 +1691,14 @@ function updateCategoryOptions() {
 function applyFilters() {
   const country = document.getElementById('countrySelect').value;
   const category = document.getElementById('categorySelect').value;
+  const section = document.getElementById('sectionSelect').value;
   const search = document.getElementById('searchInput').value.trim().toLowerCase();
   const sort = document.getElementById('sortSelect').value;
 
   filteredProducts = allProducts.filter(p => {
     if (country && p['國家'] !== country) return false;
     if (category && p['品類'] !== category) return false;
+    if (section && p['類型'] !== section) return false;
     if (search && !p['產品名稱'].toLowerCase().includes(search)) return false;
     return true;
   });
@@ -1678,10 +1787,53 @@ function renderProducts() {
 }
 
 // ===== MODAL =====
+function isProportionalOffer(product) {
+  return ['按數量比例', '比例延伸'].includes(String(product && product['_計價方式'] || ''));
+}
+
+function selectedOfferTotals(product, quantity) {
+  if (!isProportionalOffer(product)) {
+    return {
+      price: numberValue(product['台幣價格']) * quantity,
+      pv: numberValue(product['PV']) * quantity,
+    };
+  }
+  const baseQuantity = Math.max(1, numberValue(product['_基準數量']) || 1);
+  return {
+    price: Math.round(numberValue(product['台幣價格']) / baseQuantity * quantity),
+    pv: Math.round(numberValue(product['PV']) / baseQuantity * quantity),
+  };
+}
+
+function updateModalPricing() {
+  if (!currentModal) return;
+  const quantity = parseInt(document.getElementById('modalQty').value, 10) || 1;
+  const totals = selectedOfferTotals(currentModal, quantity);
+  document.getElementById('modalPrice').textContent = `NT$${totals.price.toLocaleString()}`;
+  document.getElementById('modalPv').textContent = totals.pv > 0 ? `PV ${totals.pv.toLocaleString()}` : '';
+  document.getElementById('modalQtyTotal').textContent = isProportionalOffer(currentModal)
+    ? `${quantity}${currentModal['_計量單位']}合計，已依方案比例四捨五入至元`
+    : quantity > 1 ? `${quantity}組合計` : '';
+}
+
 function openModal(idx) {
   const p = filteredProducts[idx];
   currentModal = p;
-  document.getElementById('modalQty').value = 1;
+  const proportional = isProportionalOffer(p);
+  const minimum = proportional ? Math.max(1, numberValue(p['_最低購買數量']) || 1) : 1;
+  const input = document.getElementById('modalQty');
+  input.value = minimum;
+  input.min = minimum;
+  input.dataset.step = proportional ? Math.max(1, numberValue(p['_增加間隔']) || 1) : 1;
+  document.getElementById('modalQtyLabel').textContent = proportional ? `購買數量（${p['_計量單位']}）` : '組數';
+  const bundleBlock = document.getElementById('bundleBlock');
+  if (proportional) {
+    bundleBlock.style.display = 'block';
+    bundleBlock.innerHTML = `<strong>自由搭配優惠</strong><br>最低購買 ${minimum}${escapeHtml(p['_計量單位'])}，之後每次增加 ${input.dataset.step}${escapeHtml(p['_計量單位'])}。價格依 ${p['_基準數量']}${escapeHtml(p['_計量單位'])} NT$${numberValue(p['台幣價格']).toLocaleString()} 比例計算。`;
+  } else {
+    bundleBlock.style.display = 'none';
+    bundleBlock.textContent = '';
+  }
 
   const emoji = getCategoryEmoji(p['品類']);
   const imgEl = document.getElementById('modalImg');
@@ -1707,9 +1859,7 @@ function openModal(idx) {
   }
 
   document.getElementById('modalDesc').textContent = p['產品介紹'] || '（詳細介紹待補充）';
-  document.getElementById('modalPrice').textContent = `NT$${parseInt(p['台幣價格']).toLocaleString()}`;
-  const pv = parseInt(p['PV']) || 0;
-  document.getElementById('modalPv').textContent = pv > 0 ? `PV ${pv.toLocaleString()}` : '';
+  updateModalPricing();
 
   document.getElementById('modalOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
@@ -1727,18 +1877,41 @@ function handleModalOverlayClick(e) {
 
 function changeQty(delta) {
   const input = document.getElementById('modalQty');
-  const v = Math.max(1, Math.min(99, parseInt(input.value) + delta));
+  const step = Math.max(1, parseInt(input.dataset.step, 10) || 1);
+  const minimum = Math.max(1, parseInt(input.min, 10) || 1);
+  const v = Math.max(minimum, Math.min(99, (parseInt(input.value, 10) || minimum) + delta * step));
   input.value = v;
+  updateModalPricing();
 }
 
 function addToCartFromModal() {
   if (!currentModal) return;
-  const qty = parseInt(document.getElementById('modalQty').value) || 1;
-  tryAddToCart(currentModal, qty);
+  const selectedQuantity = parseInt(document.getElementById('modalQty').value, 10) || 1;
+  if (isProportionalOffer(currentModal)) {
+    const totals = selectedOfferTotals(currentModal, selectedQuantity);
+    const unit = currentModal['_計量單位'] || '件';
+    const selectedProduct = {
+      ...currentModal,
+      '流水號': `${currentModal['流水號']}-${selectedQuantity}${unit}`,
+      '產品名稱': `${currentModal['產品名稱']}（${selectedQuantity}${unit}）`,
+      '台幣價格': totals.price,
+      'PV': totals.pv,
+      '_isUnitCalc': true,
+      '_origName': currentModal['產品名稱'],
+      '_selectedQuantity': selectedQuantity,
+    };
+    tryAddToCart(selectedProduct, 1);
+  } else {
+    tryAddToCart(currentModal, selectedQuantity);
+  }
   closeModal();
 }
 
 function quickAdd(idx) {
+  if (isProportionalOffer(filteredProducts[idx])) {
+    openModal(idx);
+    return;
+  }
   tryAddToCart(filteredProducts[idx], 1);
 }
 
@@ -1884,12 +2057,10 @@ function openCheckout() {
   // 顯示常用收件資料和儲存按鈕
   const addrSection = document.getElementById('savedAddrSection');
   const saveSection = document.getElementById('saveCurrentAddrSection');
-  if (addrSection) addrSection.style.display = 'block';
-  if (saveSection) saveSection.style.display = 'block';
-  if (currentMemberAccount === '') {
-    const savedAcc = localStorage.getItem('haigogo_account');
-    if (savedAcc) loadAddresses(savedAcc);
-  }
+  const account = currentMemberAccount || localStorage.getItem('haigogo_account') || '';
+  if (addrSection) addrSection.style.display = account ? 'block' : 'none';
+  if (saveSection) saveSection.style.display = account ? 'block' : 'none';
+  if (account) loadAddresses(account);
 }
 
 function closeCheckout() {
@@ -2220,8 +2391,9 @@ function escapeHtml(str) {
 function renderAddrSelect() {
   const addrSection = document.getElementById('savedAddrSection');
   const saveSection = document.getElementById('saveCurrentAddrSection');
-  if (addrSection) addrSection.style.display = 'block';
-  if (saveSection) saveSection.style.display = 'block';
+  const isLoggedIn = Boolean(currentMemberAccount);
+  if (addrSection) addrSection.style.display = isLoggedIn ? 'block' : 'none';
+  if (saveSection) saveSection.style.display = isLoggedIn ? 'block' : 'none';
   const sel = document.getElementById('addrQuickSelect');
   if (!sel) return;
   if (!savedAddresses || savedAddresses.length === 0) {
@@ -2294,10 +2466,19 @@ async function saveCurrentAddrFromModal() {
 }
 
 async function loadAddresses(account) {
+  if (!account) {
+    savedAddresses = [];
+    currentMemberAccount = '';
+    renderAddrSelect();
+    return;
+  }
   currentMemberAccount = account;
   try {
-    const url = ADDRESS_WEB_APP_URL + '?action=list&account=' + encodeURIComponent(account);
-    const res = await fetch(url);
+    const res = await fetch(ADDRESS_WEB_APP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'list', account })
+    });
     const data = await res.json();
     if (data.success) {
       savedAddresses = (data.addresses || []).map(normalizeAddress);
@@ -2318,6 +2499,7 @@ async function loadMemberName(account) {
     if (data.success && data.name) {
       const nameEl = document.getElementById('f_name');
       if (nameEl && !nameEl.value) nameEl.value = data.name;
+      updatePreview();
     }
   } catch(e) { console.log('載入會員姓名失敗', e); }
 }
@@ -2344,6 +2526,7 @@ function doLogout() {
   localStorage.removeItem('haigogo_account');
   localStorage.removeItem('haigogo_name');
   currentMemberAccount = ''; currentMemberName = ''; savedAddresses = [];
+  renderAddrSelect();
   const statusEl = document.getElementById('loginStatus');
   if (statusEl) statusEl.classList.remove('show');
   document.getElementById('loginOverlay').classList.remove('hidden');
@@ -2353,76 +2536,8 @@ function doLogout() {
   if (pwEl) pwEl.value = '';
 }
 
-// ===== 特惠組拆分計算 =====
-let currentModalUnitPrice = null;
-let currentModalBundleQty = null;
-let currentModalBundlePrice = null;
-let currentBuyMode = 'bundle';
-
-function parseBundleQty(name) {
-  if (!name) return 1;
-  const arabicMatch = name.match(/([0-9]+)\s*(瓶|盒|入|件|包|杯|條|組)/);
-  if (arabicMatch) return parseInt(arabicMatch[1]);
-  const chineseMap = {'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'兩':2};
-  const chineseMatch = name.match(/([一二三四五六七八九十兩])\s*(瓶|盒|入|件|包|杯|條)/);
-  if (chineseMatch) return chineseMap[chineseMatch[1]] || 1;
-  return 1;
-}
-
-function selectBuyMode(mode) {
-  currentBuyMode = mode;
-  const unitArea = document.getElementById('unitQtyArea');
-  const bundleLabel = document.getElementById('buyBundleLabel');
-  const unitLabel = document.getElementById('buyUnitLabel');
-  if (!unitArea) return;
-  if (mode === 'unit') {
-    unitArea.style.display = 'block';
-    bundleLabel.style.border = '2px solid transparent'; bundleLabel.style.background = '';
-    unitLabel.style.border = '2px solid #b8860b'; unitLabel.style.background = '#fffdf0';
-    document.getElementById('modalQtyUnit').value = 1;
-    updateQtyTotalDisplay();
-  } else {
-    unitArea.style.display = 'none';
-    bundleLabel.style.border = '2px solid #b8860b'; bundleLabel.style.background = '#fffdf0';
-    unitLabel.style.border = '2px solid transparent'; unitLabel.style.background = '';
-  }
-}
-
-function updateQtyTotalDisplay() {
-  if (currentBuyMode !== 'unit' || !currentModalUnitPrice || !currentModalBundleQty) {
-    const d = document.getElementById('qtyTotalDisplay'); if(d) d.textContent = '';
-    const h = document.getElementById('unitQtyHint'); if(h) h.textContent = '';
-    return;
-  }
-  const qty = parseInt(document.getElementById('modalQtyUnit').value) || 1;
-  const bundleQty = currentModalBundleQty;
-  const singlePrice = currentModalUnitPrice;
-  const bundlePrice = currentModalBundlePrice;
-  let price, hint;
-  if (qty < bundleQty) {
-    price = singlePrice * qty;
-    hint = `⚠️ 未達${bundleQty}瓶，以單瓶定價 NT$${singlePrice.toLocaleString()} 計算`;
-  } else if (qty === bundleQty) {
-    price = bundlePrice;
-    hint = '✅ 剛好一整組，與買整組同價';
-  } else {
-    const unitFromBundle = Math.round(bundlePrice / bundleQty);
-    price = unitFromBundle * qty;
-    hint = `🎉 超過${bundleQty}瓶，以特惠換算 NT$${unitFromBundle.toLocaleString()} / 瓶計算`;
-  }
-  const d = document.getElementById('qtyTotalDisplay'); if(d) d.textContent = '= NT$' + price.toLocaleString();
-  const h = document.getElementById('unitQtyHint'); if(h) h.textContent = hint;
-}
-
-function changeQtyUnit(delta) {
-  const input = document.getElementById('modalQtyUnit');
-  if (!input) return;
-  input.value = Math.max(1, Math.min(99, parseInt(input.value) + delta));
-  updateQtyTotalDisplay();
-}
-
 // ===== INIT =====
-loadData();
+loadNewDatabase();
 </script>
 </body>
 </html>
