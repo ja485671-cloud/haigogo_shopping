@@ -1630,7 +1630,25 @@ function initFilters() {
   cs.addEventListener('change', () => { updateCategoryOptions(); applyFilters(); updateNotice(); });
   document.getElementById('categorySelect').addEventListener('change', applyFilters);
   document.getElementById('sectionSelect').addEventListener('change', applyFilters);
-  document.getElementById('searchInput').addEventListener('input', applyFilters);
+  const searchInput = document.getElementById('searchInput');
+let isSearchComposing = false;
+let searchTimer = null;
+
+searchInput.addEventListener('compositionstart', () => {
+  isSearchComposing = true;
+});
+
+searchInput.addEventListener('compositionend', () => {
+  isSearchComposing = false;
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(applyFilters, 120);
+});
+
+searchInput.addEventListener('input', () => {
+  if (isSearchComposing) return;
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(applyFilters, 120);
+});
   document.getElementById('sortSelect').addEventListener('change', applyFilters);
 
   updateCategoryOptions();
